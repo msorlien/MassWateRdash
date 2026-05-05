@@ -37,6 +37,11 @@ file_labels <- c(
   wqxdat    = "WQX metadata"
 )
 
+is_column_error <- function(msg) {
+  if (is.null(msg) || nchar(trimws(msg)) == 0) return(FALSE)
+  grepl("correct the column names|Missing the following columns", msg)
+}
+
 detect_wrong_file <- function(raw_df, data_name) {
   if (is.null(raw_df)) return(NULL)
   cols <- names(raw_df)
@@ -122,15 +127,73 @@ parse_problem_rows <- function(msg) {
   sort(unique(rows[!is.na(rows)]))
 }
 
+# Parse column indices and a column->row cell map from a validation message.
+# col_indices: positions flagged via "(column N)" — for header editor highlighting.
+# cell_map:    named list of col_name -> row_indices for cell-level highlighting.
+#   Pattern A — explicit pairing "ColName (row(s) N, M)" (frecomdat/accdat style).
+#   Pattern B — a known column name appears literally in the same line as "row(s) N".
+parse_error_locations <- function(msg, col_names = NULL) {
+  empty <- list(col_indices = integer(0), cell_map = list())
+  if (is.null(msg) || nchar(trimws(msg)) == 0) return(empty)
+  msg <- gsub("\033\\[[0-9;]*[mGKHFABCDJK]", "", msg)
+
+  col_idx_hits <- regmatches(msg, gregexpr("\\(column (\\d+)\\)", msg, perl = TRUE))[[1]]
+  col_indices <- sort(unique(suppressWarnings(as.integer(gsub("[^0-9]", "", col_idx_hits)))))
+  col_indices <- col_indices[!is.na(col_indices)]
+
+  cell_map <- list()
+
+  for (ln in strsplit(msg, "\n")[[1]]) {
+    if (!grepl("row\\(s\\)", ln)) next
+
+    # Pattern A: "ColName (row(s) N, M)" — explicit pairing
+    pA <- regmatches(ln, gregexpr("([^,\n]+?)\\s+\\(row\\(s\\)\\s+[\\d, ]+\\)", ln, perl = TRUE))[[1]]
+    if (length(pA) > 0) {
+      for (hit in pA) {
+        col_nm  <- trimws(sub("\\s*\\(row\\(s\\).*", "", hit))
+        rows_str <- regmatches(hit, regexpr("row\\(s\\)\\s+[\\d, ]+", hit))
+        rows <- sort(unique(suppressWarnings(as.integer(
+          unlist(strsplit(gsub("row\\(s\\)\\s+", "", rows_str), "[, ]+"))
+        ))))
+        rows <- rows[!is.na(rows)]
+        if (nchar(col_nm) > 0 && length(rows) > 0)
+          cell_map[[col_nm]] <- sort(unique(c(cell_map[[col_nm]], rows)))
+      }
+      next
+    }
+
+    # Pattern B: a known column name appears literally in the line alongside row(s)
+    if (!is.null(col_names)) {
+      rows_str <- regmatches(ln, gregexpr("row\\(s\\)\\s+[\\d, ]+", ln, perl = TRUE))[[1]]
+      rows <- sort(unique(suppressWarnings(as.integer(
+        unlist(strsplit(gsub("row\\(s\\)\\s+", "", rows_str), "[, ]+"))
+      ))))
+      rows <- rows[!is.na(rows)]
+      if (length(rows) > 0) {
+        for (cn in col_names) {
+          if (grepl(cn, ln, fixed = TRUE))
+            cell_map[[cn]] <- sort(unique(c(cell_map[[cn]], rows)))
+        }
+      }
+    }
+  }
+
+  list(col_indices = col_indices, cell_map = cell_map)
+}
+
 # Handle retry after user edits in handsontable
 # show_all: TRUE when the user toggled to full-table view (no row merge needed)
 # problem_rows: indices that were displayed in filtered view
 handle_retry <- function(data_name, hot_input, hot_headers_input = NULL,
                          show_all = TRUE, problem_rows = integer(0)) {
-  req(hot_input)
   validation_log("")
 
-  edited_df <- rhandsontable::hot_to_r(hot_input)
+  if (!is.null(hot_input)) {
+    edited_df <- rhandsontable::hot_to_r(hot_input)
+  } else {
+    req(raw_data_states[[data_name]])
+    edited_df <- raw_data_states[[data_name]]
+  }
 
   # Apply any edited column names from the header editor
   if (!is.null(hot_headers_input)) {

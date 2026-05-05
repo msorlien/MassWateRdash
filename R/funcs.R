@@ -111,9 +111,22 @@ fl_upload <- function(file, read_function, data_name) {
   data_states[[data_name]] <- result
 }
 
+# Parse row indices from a validation message (e.g. "in row(s) 3, 7, 45")
+parse_problem_rows <- function(msg) {
+  if (is.null(msg) || nchar(trimws(msg)) == 0) return(integer(0))
+  msg <- gsub("\033\\[[0-9;]*[mGKHFABCDJK]", "", msg)
+  hits <- regmatches(msg, gregexpr("row\\(s\\)\\s+([0-9, ]+)", msg, perl = TRUE))[[1]]
+  if (length(hits) == 0) return(integer(0))
+  nums <- gsub("row\\(s\\)\\s+", "", hits)
+  rows <- suppressWarnings(as.integer(unlist(strsplit(nums, "[, ]+"))))
+  sort(unique(rows[!is.na(rows)]))
+}
+
 # Handle retry after user edits in handsontable
-# hot_headers_input: rhandsontable input for the column-name editor (may be NULL)
-handle_retry <- function(data_name, hot_input, hot_headers_input = NULL) {
+# show_all: TRUE when the user toggled to full-table view (no row merge needed)
+# problem_rows: indices that were displayed in filtered view
+handle_retry <- function(data_name, hot_input, hot_headers_input = NULL,
+                         show_all = TRUE, problem_rows = integer(0)) {
   req(hot_input)
   validation_log("")
 
@@ -126,6 +139,19 @@ handle_retry <- function(data_name, hot_input, hot_headers_input = NULL) {
       names(edited_df) <- new_names
   }
 
+  # When filtered view was active, merge the edited subset back into the full data
+  if (!show_all && length(problem_rows) > 0 && !is.null(raw_data_states[[data_name]])) {
+    full_df <- raw_data_states[[data_name]]
+    names(full_df) <- names(edited_df)
+    valid_rows <- problem_rows[problem_rows >= 1 & problem_rows <= nrow(full_df)]
+    full_df[valid_rows, ] <- edited_df[seq_along(valid_rows), ]
+    edited_df <- full_df
+  }
+
+  # Persist edits into raw_data_states so they survive a failed retry and the
+  # re-rendered table reflects the user's work on the next round of checks
+  raw_data_states[[data_name]] <<- edited_df
+
   result <- tryCatch({
     capture_messages(retry_fns[[data_name]](edited_df))
   }, error = function(e) {
@@ -134,10 +160,9 @@ handle_retry <- function(data_name, hot_input, hot_headers_input = NULL) {
   })
 
   data_states[[data_name]] <- result
-  # Only hide the editor on success; leave it open (with edits intact) on failure
   if (!is.null(result)) {
     edit_visible[[data_name]] <- FALSE
-    raw_data_states[[data_name]] <- NULL
+    raw_data_states[[data_name]] <<- NULL
     removeModal()
   }
 }

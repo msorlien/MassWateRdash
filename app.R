@@ -528,7 +528,13 @@ server <- function(input, output, session) {
             rHandsontableOutput(paste0(nm, "_hot_headers"))
           ),
           card(
-            card_header("Data"),
+            card_header(
+              div(
+                class = "d-flex justify-content-between align-items-center w-100",
+                "Data",
+                uiOutput(paste0(nm, "_row_filter_ui"))
+              )
+            ),
             rHandsontableOutput(paste0(nm, "_hot"))
           ),
           footer = tagList(
@@ -561,16 +567,49 @@ server <- function(input, output, session) {
       })
       outputOptions(output, paste0(nm, "_hot_headers"), suspendWhenHidden = FALSE)
 
-      # Data editor
+      # Row filter toggle — shown in the Data card header when problem rows exist
+      output[[paste0(nm, "_row_filter_ui")]] <- renderUI({
+        problem_rows <- parse_problem_rows(validation_log())
+        if (length(problem_rows) == 0) return(NULL)
+        n_total <- if (!is.null(raw_data_states[[nm]])) nrow(raw_data_states[[nm]]) else 0
+        div(
+          class = "d-flex align-items-center gap-2",
+          span(
+            class = "badge bg-warning text-dark",
+            paste(length(problem_rows), "row(s) with issues")
+          ),
+          checkboxInput(
+            paste0(nm, "_show_all_rows"),
+            paste0("show all ", n_total, " rows"),
+            value = FALSE
+          )
+        )
+      })
+      outputOptions(output, paste0(nm, "_row_filter_ui"), suspendWhenHidden = FALSE)
+
+      # Data editor — shows only problem rows by default when they exist
       output[[paste0(nm, "_hot")]] <- renderRHandsontable({
         req(raw_data_states[[nm]])
-        rhandsontable(raw_data_states[[nm]], width = "100%", height = 450) |>
+        dat <- raw_data_states[[nm]]
+        problem_rows <- parse_problem_rows(validation_log())
+        show_all <- isTRUE(input[[paste0(nm, "_show_all_rows")]])
+        if (length(problem_rows) > 0 && !show_all) {
+          valid_rows <- problem_rows[problem_rows >= 1 & problem_rows <= nrow(dat)]
+          dat <- dat[valid_rows, , drop = FALSE]
+        }
+        rhandsontable(dat, width = "100%", height = 450) |>
           hot_table(wordWrap = FALSE)
       })
       outputOptions(output, paste0(nm, "_hot"), suspendWhenHidden = FALSE)
 
       observeEvent(input[[paste0(nm, "_retry")]], {
-        handle_retry(nm, input[[paste0(nm, "_hot")]], input[[paste0(nm, "_hot_headers")]])
+        handle_retry(
+          nm,
+          input[[paste0(nm, "_hot")]],
+          input[[paste0(nm, "_hot_headers")]],
+          show_all     = isTRUE(input[[paste0(nm, "_show_all_rows")]]),
+          problem_rows = parse_problem_rows(validation_log())
+        )
       })
     })
   }

@@ -53,7 +53,7 @@ detect_wrong_file <- function(raw_df, data_name) {
 raw_read_fns <- list(
   resdat = function(path) {
     suppressWarnings(readxl::read_excel(path, na = c('NA', 'na', ''), guess_max = Inf)) |>
-      dplyr::mutate_if(function(x) !lubridate::is.POSIXct(x), as.character)
+      dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
   },
   accdat = function(path) {
     dat <- readxl::read_excel(path, na = c('NA', ''), col_types = 'text')

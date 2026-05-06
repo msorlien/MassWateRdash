@@ -7,19 +7,21 @@ addResourcePath(
 
 # ui -----
 ui <- page_navbar(
-  header = tags$head(
-    tags$script(HTML(
-      "$(document).on('shown.bs.modal', function(e) {
-        ['resdat','accdat','frecomdat','sitdat','wqxdat'].forEach(function(nm) {
-          if ($(e.target).find('#' + nm + '_hot').length > 0) {
-            Shiny.setInputValue(nm + '_modal_shown', Date.now());
-          }
-        });
-      });"
-    )),
-    tags$style(HTML(
-      ".rhandsontable .htCore thead th { white-space: nowrap; }"
-    ))
+  header = tagList(
+    useShinyjs(),
+    tags$head(
+      tags$script(HTML(
+        "$(document).on('shown.bs.modal', function(e) {
+          $(e.target).find('.rhandsontable').each(function() {
+            var ht = HTMLWidgets.getInstance(this);
+            if (ht && ht.hot) { ht.hot.render(); }
+          });
+        });"
+      )),
+      tags$style(HTML(
+        ".rhandsontable .htCore thead th { white-space: nowrap; }"
+      ))
+    )
   ),
   title = span(
     img(src = "toimg/logo.png", height = "40px", style = "margin-right: 10px;"),
@@ -508,12 +510,6 @@ server <- function(input, output, session) {
       nm  <- fd$name
       lbl <- fd$label
 
-      # Incremented after the modal becomes visible — forces a fresh render with correct dimensions
-      open_trigger <- reactiveVal(0)
-      observeEvent(input[[paste0(nm, "_modal_shown")]], {
-        open_trigger(isolate(open_trigger()) + 1)
-      }, ignoreNULL = TRUE, ignoreInit = TRUE)
-
       # Button shown inside the validation card when file has a validation error
       output[[paste0(nm, "_editor")]] <- renderUI({
         req(isTRUE(edit_visible[[nm]]))
@@ -530,13 +526,34 @@ server <- function(input, output, session) {
           uiOutput(paste0(nm, "_modal_msgs")),
           br(),
           p("Fix the issue below, then click ‘Try upload again’."),
-          uiOutput(paste0(nm, "_col_editor_card")),
-          uiOutput(paste0(nm, "_data_editor_card")),
+          div(id = paste0(nm, "_col_card"), style = "display:none",
+            card(
+              card_header("Column Names"),
+              rHandsontableOutput(paste0(nm, "_hot_headers"))
+            )
+          ),
+          div(id = paste0(nm, "_data_card"), style = "display:none",
+            card(
+              card_header(
+                div(
+                  class = "d-flex justify-content-between align-items-center w-100",
+                  "Data",
+                  uiOutput(paste0(nm, "_row_filter_ui"))
+                )
+              ),
+              rHandsontableOutput(paste0(nm, "_hot"))
+            )
+          ),
           footer = tagList(
             actionButton(paste0(nm, "_retry"), "Try upload again", class = "btn-primary"),
             modalButton("Close")
           )
         ))
+        if (is_column_error(validation_log())) {
+          shinyjs::show(paste0(nm, "_col_card"))
+        } else {
+          shinyjs::show(paste0(nm, "_data_card"))
+        }
       })
 
       # Validation message shown inside the modal
@@ -549,42 +566,8 @@ server <- function(input, output, session) {
         div(HTML(paste(lines, collapse = "<br>")))
       })
 
-      # Column names card — shown only for column name/missing column errors
-      output[[paste0(nm, "_col_editor_card")]] <- renderUI({
-        open_trigger()
-        req(raw_data_states[[nm]])
-        if (!is_column_error(validation_log())) return(NULL)
-        card(
-          card_header("Column Names"),
-          rHandsontableOutput(paste0(nm, "_hot_headers"))
-        )
-      })
-      outputOptions(output, paste0(nm, "_col_editor_card"), suspendWhenHidden = FALSE)
-
-      # Data card — shown only for non-column errors (value, format, parameter issues)
-      output[[paste0(nm, "_data_editor_card")]] <- renderUI({
-        open_trigger()
-        req(raw_data_states[[nm]])
-        if (is_column_error(validation_log())) return(NULL)
-        problem_rows <- parse_problem_rows(validation_log())
-        n_total <- nrow(raw_data_states[[nm]])
-        row_filter_ui <- if (length(problem_rows) > 0) {
-          div(
-            class = "d-flex align-items-center gap-2",
-            span(class = "badge bg-warning text-dark", paste(length(problem_rows), "row(s) with issues")),
-            checkboxInput(paste0(nm, "_show_all_rows"), paste0("show all ", n_total, " rows"), value = FALSE)
-          )
-        } else NULL
-        card(
-          card_header(div(class = "d-flex justify-content-between align-items-center w-100", "Data", row_filter_ui)),
-          rHandsontableOutput(paste0(nm, "_hot"))
-        )
-      })
-      outputOptions(output, paste0(nm, "_data_editor_card"), suspendWhenHidden = FALSE)
-
-      # Column names editor (fills div created by _col_editor_card)
+      # Column names editor (renders even when modal is closed so it’s ready on open)
       output[[paste0(nm, "_hot_headers")]] <- renderRHandsontable({
-        open_trigger()
         req(raw_data_states[[nm]])
         col_names <- names(raw_data_states[[nm]])
         locs <- parse_error_locations(validation_log())
@@ -608,9 +591,28 @@ server <- function(input, output, session) {
       })
       outputOptions(output, paste0(nm, "_hot_headers"), suspendWhenHidden = FALSE)
 
-      # Data editor (fills div created by _data_editor_card)
+      # Row filter toggle — shown in the Data card header when problem rows exist
+      output[[paste0(nm, "_row_filter_ui")]] <- renderUI({
+        problem_rows <- parse_problem_rows(validation_log())
+        if (length(problem_rows) == 0) return(NULL)
+        n_total <- if (!is.null(raw_data_states[[nm]])) nrow(raw_data_states[[nm]]) else 0
+        div(
+          class = "d-flex align-items-center gap-2",
+          span(
+            class = "badge bg-warning text-dark",
+            paste(length(problem_rows), "row(s) with issues")
+          ),
+          checkboxInput(
+            paste0(nm, "_show_all_rows"),
+            paste0("show all ", n_total, " rows"),
+            value = FALSE
+          )
+        )
+      })
+      outputOptions(output, paste0(nm, "_row_filter_ui"), suspendWhenHidden = FALSE)
+
+      # Data editor — shows only problem rows by default when they exist
       output[[paste0(nm, "_hot")]] <- renderRHandsontable({
-        open_trigger()
         req(raw_data_states[[nm]])
         dat <- raw_data_states[[nm]]
         problem_rows <- parse_problem_rows(validation_log())
@@ -638,8 +640,8 @@ server <- function(input, output, session) {
             hot <- hot |> hot_col(i, renderer = sprintf(
               "function(instance, td, row, col, prop, value, cellProperties) {
                  Handsontable.renderers.TextRenderer.apply(this, arguments);
-                 if ([%s].indexOf(row) > -1) { td.style.background = ‘#fff3cd’; }
-                 if ([%s].indexOf(row) > -1) { td.style.background = ‘#ffc107’; }
+                 if ([%s].indexOf(row) > -1) { td.style.background = '#fff3cd'; }
+                 if ([%s].indexOf(row) > -1) { td.style.background = '#ffc107'; }
                }",
               paste(row_0, collapse = ","),
               paste(cell_0, collapse = ",")
@@ -659,6 +661,15 @@ server <- function(input, output, session) {
           show_all          = isTRUE(input[[paste0(nm, "_show_all_rows")]]),
           problem_rows      = parse_problem_rows(validation_log())
         )
+        if (isTRUE(edit_visible[[nm]])) {
+          if (is_column_error(validation_log())) {
+            shinyjs::show(paste0(nm, "_col_card"))
+            shinyjs::hide(paste0(nm, "_data_card"))
+          } else {
+            shinyjs::hide(paste0(nm, "_col_card"))
+            shinyjs::show(paste0(nm, "_data_card"))
+          }
+        }
       })
     })
   }

@@ -128,10 +128,10 @@ parse_problem_rows <- function(msg) {
 }
 
 # Parse column indices and a column->row cell map from a validation message.
-# col_indices: positions flagged via "(column N)" — for header editor highlighting.
-# cell_map:    named list of col_name -> row_indices for cell-level highlighting.
-#   Pattern A — explicit pairing "ColName (row(s) N, M)" (frecomdat/accdat style).
-#   Pattern B — a known column name appears literally in the same line as "row(s) N".
+# col_indices: 1-based positions flagged via "(column N)" — for header highlighting.
+# cell_map:    named list col_name -> row_indices for cell-level highlighting.
+#   Pattern A: "ColName (row(s) N, M)" explicit pairing (frecomdat/accdat style).
+#   Pattern B: a known column name appears in the same line as "row(s) N".
 parse_error_locations <- function(msg, col_names = NULL) {
   empty <- list(col_indices = integer(0), cell_map = list())
   if (is.null(msg) || nchar(trimws(msg)) == 0) return(empty)
@@ -146,11 +146,10 @@ parse_error_locations <- function(msg, col_names = NULL) {
   for (ln in strsplit(msg, "\n")[[1]]) {
     if (!grepl("row\\(s\\)", ln)) next
 
-    # Pattern A: "ColName (row(s) N, M)" — explicit pairing
     pA <- regmatches(ln, gregexpr("([^,\n]+?)\\s+\\(row\\(s\\)\\s+[\\d, ]+\\)", ln, perl = TRUE))[[1]]
     if (length(pA) > 0) {
       for (hit in pA) {
-        col_nm  <- trimws(sub("\\s*\\(row\\(s\\).*", "", hit))
+        col_nm   <- trimws(sub("\\s*\\(row\\(s\\).*", "", hit))
         rows_str <- regmatches(hit, regexpr("row\\(s\\)\\s+[\\d, ]+", hit))
         rows <- sort(unique(suppressWarnings(as.integer(
           unlist(strsplit(gsub("row\\(s\\)\\s+", "", rows_str), "[, ]+"))
@@ -162,7 +161,6 @@ parse_error_locations <- function(msg, col_names = NULL) {
       next
     }
 
-    # Pattern B: a known column name appears literally in the line alongside row(s)
     if (!is.null(col_names)) {
       rows_str <- regmatches(ln, gregexpr("row\\(s\\)\\s+[\\d, ]+", ln, perl = TRUE))[[1]]
       rows <- sort(unique(suppressWarnings(as.integer(

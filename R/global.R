@@ -1,6 +1,5 @@
 library(shiny)
 library(bslib)
-library(shinyjs)
 library(MassWateR)
 library(rhandsontable)
 

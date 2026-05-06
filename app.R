@@ -25,20 +25,21 @@ ui <- page_navbar(
     "MassWateR Dashboard"
   ),
 
-  # upload & validate -----
-  bslib::nav_panel(
-    "Format",
-    mod_format_ui("prep")
-  ),
-  
   nav_panel("Upload & Validate",
-            
+
     page_sidebar(
-      
+
       sidebar = sidebar(
         title = "Upload Data Files",
         width = 500,
         shinyWidgets::materialSwitch('tester', "Test mode", FALSE),
+        actionButton(
+          "show_format_modal",
+          "Convert from another format",
+          icon = icon("right-left"),
+          width = "100%",
+          class = "btn-outline-secondary mb-3"
+        ),
         fileInput("resdat", "Upload Results Data (.xlsx)", accept = ".xlsx"),
         fileInput("accdat", "Upload DQO Accuracy Data (.xlsx)", accept = ".xlsx"),
         fileInput("frecomdat", "Upload DQO Frequency & Completeness Data (.xlsx)", accept = ".xlsx"),
@@ -414,8 +415,29 @@ server <- function(input, output, session) {
   
   # Modules ----
   wqf <- mod_format_server("prep")
-  # Refer to output as wqf$dat_sites() and wqf$dat_results()
-  
+
+  observeEvent(wqf$dat_results(), {
+    req(wqf$dat_results())
+    from_format_upload(wqf$dat_results(), retry_fns$resdat, "resdat")
+    showNotification("Results data loaded from format converter", type = "message", duration = 4)
+  })
+
+  observeEvent(wqf$dat_sites(), {
+    req(wqf$dat_sites())
+    from_format_upload(wqf$dat_sites(), retry_fns$sitdat, "sitdat")
+    showNotification("Sites data loaded from format converter", type = "message", duration = 4)
+  })
+
+  observeEvent(input$show_format_modal, {
+    showModal(modalDialog(
+      title = "Convert from Another Format",
+      mod_format_ui("prep", in_modal = TRUE),
+      size = "xl",
+      footer = modalButton("Close"),
+      easyClose = TRUE
+    ))
+  })
+
   # upload & validate -----
   # Reactive values to store validation messages and data states
   validation_log <<- reactiveVal("")

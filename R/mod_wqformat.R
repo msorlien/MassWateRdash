@@ -5,135 +5,139 @@
 #' @param id String. Namespace ID for module.
 #'
 #' @noRd
-mod_format_ui <- function(id) {
+mod_format_ui <- function(id, in_modal = FALSE) {
   ns <- NS(id)
 
-  tagList(
-    # Sidebar ----
-    bslib::page_sidebar(
-      sidebar = bslib::sidebar(
-        width = 500,
-        # * Results ----
-        h2("Results Data"),
-        dropdown(
-          ns("result_format"),
-          label = "Select Results Format",
-          choices = c(
-            "blank", "MA_BRC", "ME_FOCB", "ME_DEP", "masswater", "RI_DEM",
-            "RI_WW", "wqdashboard", "WQX", "custom"
-          ),
-          choice_names = c(
-            " ", "Blackstone River Coalition", "Friends of Casco Bay",
-            "Maine DEP", "MassWateR", "RI DEM", "URI Watershed Watch",
-            "WQdashboard", "WQX", "Other"
-          ),
-          sorted = FALSE,
-          multiple = FALSE
-        ),
-        conditionalPanel(
-          condition = paste0(
-            'output["', ns("show_result_custom"), '"] == "show"'
-          ),
-          fileInput(
-            ns("result_custom"),
-            "Upload Custom Result Format (.xlsx)",
-            accept = ".xlsx"
-          )
-        ),
-        conditionalPanel(
-          condition = paste0(
-            'output["', ns("show_result_upload"), '"] == "show"'
-          ),
-          fileInput(
-            ns("result_upload"),
-            "Upload Results Data (.xlsx)",
-            accept = ".xlsx"
-          )
-        ),
-        conditionalPanel(
-          condition = paste0(
-            'output["', ns("show_result_download"), '"] == "show"'
-          ),
-          downloadButton(
-            ns("result_download"),
-            "Download Results (.xlsx)",
-            style = "width: fit-content;"
-          )
-        ),
-        # * Sites ----
-        h2("Site Metadata"),
-        dropdown(
-          ns("site_format"),
-          label = "Select Site Format",
-          choices = c(
-            "blank", "MA_BRC", "ME_FOCB", "masswater", "RI_WW", "wqdashboard",
-            "WQX", "custom"
-          ),
-          choice_names = c(
-            " ", "Blackstone River Coalition", "Friends of Casco Bay",
-            "MassWateR", "URI Watershed Watch", "WQdashboard", "WQX", "Other"
-          ),
-          sorted = FALSE,
-          multiple = FALSE
-        ),
-        conditionalPanel(
-          condition = paste0(
-            'output["', ns("show_site_custom"), '"] == "show"'
-          ),
-          fileInput(
-            ns("site_custom"),
-            "Upload Custom Site Format (.xlsx)",
-            accept = ".xlsx"
-          )
-        ),
-        conditionalPanel(
-          condition = paste0(
-            'output["', ns("show_site_upload"), '"] == "show"'
-          ),
-          fileInput(
-            ns("site_upload"),
-            "Upload Site Metadata (.xlsx)",
-            accept = ".xlsx"
-          )
-        ),
-        conditionalPanel(
-          condition = paste0(
-            'output["', ns("show_site_download"), '"] == "show"'
-          ),
-          downloadButton(
-            ns("site_download"),
-            "Download Sites (.xlsx)",
-            style = "width: fit-content;"
-          )
-        ),
+  fmt_sidebar <- bslib::sidebar(
+    width = 500,
+    # * Results ----
+    h2("Results Data"),
+    dropdown(
+      ns("result_format"),
+      label = "Select Results Format",
+      choices = c(
+        "blank", "MA_BRC", "ME_FOCB", "ME_DEP", "masswater", "RI_DEM",
+        "RI_WW", "wqdashboard", "WQX", "custom"
       ),
-      # Upload status ----
-      bslib::layout_columns(
-        fill = FALSE,
-        bslib::value_box(
-          title = "Results Data",
-          value = htmlOutput(ns("result_status"))
-        ),
-        bslib::value_box(
-          title = "Custom Result Format",
-          value = htmlOutput(ns("custom_result_status"))
-        ),
-        bslib::value_box(
-          title = "Site Metadata",
-          value = htmlOutput(ns("site_status"))
-        ),
-        bslib::value_box(
-          title = "Custom Site Format",
-          value = htmlOutput(ns("custom_site_status"))
-        )
+      choice_names = c(
+        " ", "Blackstone River Coalition", "Friends of Casco Bay",
+        "Maine DEP", "MassWateR", "RI DEM", "URI Watershed Watch",
+        "WQdashboard", "WQX", "Other"
       ),
-      # Validation text ----
-      bslib::card(
-        bslib::card_header("Data Validation Messages"),
-        verbatimTextOutput(ns("validation_messages"), placeholder = FALSE)
+      sorted = FALSE,
+      multiple = FALSE
+    ),
+    conditionalPanel(
+      condition = paste0(
+        'output["', ns("show_result_custom"), '"] == "show"'
+      ),
+      fileInput(
+        ns("result_custom"),
+        "Upload Custom Result Format (.xlsx)",
+        accept = ".xlsx"
       )
+    ),
+    conditionalPanel(
+      condition = paste0(
+        'output["', ns("show_result_upload"), '"] == "show"'
+      ),
+      fileInput(
+        ns("result_upload"),
+        "Upload Results Data (.xlsx)",
+        accept = ".xlsx"
+      )
+    ),
+    conditionalPanel(
+      condition = paste0(
+        'output["', ns("show_result_download"), '"] == "show"'
+      ),
+      downloadButton(
+        ns("result_download"),
+        "Download Results (.xlsx)",
+        style = "width: fit-content;"
+      )
+    ),
+    # * Sites ----
+    h2("Site Metadata"),
+    dropdown(
+      ns("site_format"),
+      label = "Select Site Format",
+      choices = c(
+        "blank", "MA_BRC", "ME_FOCB", "masswater", "RI_WW", "wqdashboard",
+        "WQX", "custom"
+      ),
+      choice_names = c(
+        " ", "Blackstone River Coalition", "Friends of Casco Bay",
+        "MassWateR", "URI Watershed Watch", "WQdashboard", "WQX", "Other"
+      ),
+      sorted = FALSE,
+      multiple = FALSE
+    ),
+    conditionalPanel(
+      condition = paste0(
+        'output["', ns("show_site_custom"), '"] == "show"'
+      ),
+      fileInput(
+        ns("site_custom"),
+        "Upload Custom Site Format (.xlsx)",
+        accept = ".xlsx"
+      )
+    ),
+    conditionalPanel(
+      condition = paste0(
+        'output["', ns("show_site_upload"), '"] == "show"'
+      ),
+      fileInput(
+        ns("site_upload"),
+        "Upload Site Metadata (.xlsx)",
+        accept = ".xlsx"
+      )
+    ),
+    conditionalPanel(
+      condition = paste0(
+        'output["', ns("show_site_download"), '"] == "show"'
+      ),
+      downloadButton(
+        ns("site_download"),
+        "Download Sites (.xlsx)",
+        style = "width: fit-content;"
+      )
+    ),
+  )
+
+  fmt_main <- tagList(
+    # Upload status ----
+    bslib::layout_columns(
+      fill = FALSE,
+      bslib::value_box(
+        title = "Results Data",
+        value = htmlOutput(ns("result_status"))
+      ),
+      bslib::value_box(
+        title = "Custom Result Format",
+        value = htmlOutput(ns("custom_result_status"))
+      ),
+      bslib::value_box(
+        title = "Site Metadata",
+        value = htmlOutput(ns("site_status"))
+      ),
+      bslib::value_box(
+        title = "Custom Site Format",
+        value = htmlOutput(ns("custom_site_status"))
+      )
+    ),
+    # Validation text ----
+    bslib::card(
+      bslib::card_header("Data Validation Messages"),
+      verbatimTextOutput(ns("validation_messages"), placeholder = FALSE)
     )
   )
+
+  if (in_modal) {
+    bslib::layout_sidebar(sidebar = fmt_sidebar, fmt_main)
+  } else {
+    tagList(bslib::page_sidebar(sidebar = fmt_sidebar, fmt_main))
+  }
 }
 
 #' wqformat server

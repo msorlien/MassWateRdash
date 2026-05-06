@@ -116,6 +116,26 @@ fl_upload <- function(file, read_function, data_name) {
   data_states[[data_name]] <- result
 }
 
+# upload handler for data already converted in memory (e.g. from Format tab)
+from_format_upload <- function(df, retry_fn, data_name) {
+  validation_log("")
+  for (nm in names(reactiveValuesToList(edit_visible))) {
+    edit_visible[[nm]] <- FALSE
+  }
+  raw_data_states[[data_name]] <- NULL
+
+  result <- tryCatch({
+    capture_messages(retry_fn(df))
+  }, error = function(e) {
+    validation_log(paste0("Error processing ", data_name, ": ", e$message))
+    raw_data_states[[data_name]] <<- df
+    edit_visible[[data_name]] <<- TRUE
+    NULL
+  })
+
+  data_states[[data_name]] <- result
+}
+
 # Parse row indices from a validation message (e.g. "in row(s) 3, 7, 45")
 parse_problem_rows <- function(msg) {
   if (is.null(msg) || nchar(trimws(msg)) == 0) return(integer(0))
@@ -241,9 +261,11 @@ handle_retry <- function(data_name, hot_input, hot_headers_input = NULL,
 #'
 #' @noRd
 fl_status <- function(tester, file_input, data_state) {
-  if(tester) return(HTML("<span style='color:#4287f5'>Using test data</span>"))
-  if(is.null(file_input)) return(HTML("No file uploaded"))
-  if(is.null(data_state)) HTML("<span style='color:#f54242'>Error loading</span>") else HTML("<span style='color:#1e9c3b'>Data loaded</span>")
+  if (tester) return(HTML("<span style='color:#4287f5'>Using test data</span>"))
+  if (is.null(file_input) && is.null(data_state)) return(HTML("No file uploaded"))
+  if (is.null(data_state)) return(HTML("<span style='color:#f54242'>Error loading</span>"))
+  if (is.null(file_input)) HTML("<span style='color:#1e9c3b'>Loaded from format converter</span>")
+  else HTML("<span style='color:#1e9c3b'>Data loaded</span>")
 }
 
 # dqo table theme

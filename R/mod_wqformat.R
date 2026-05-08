@@ -9,7 +9,7 @@ mod_format_ui <- function(id, in_modal = FALSE) {
   ns <- NS(id)
 
   fmt_sidebar <- bslib::sidebar(
-    width = 500,
+    width = 350,
     # * Results ----
     h2("Results Data"),
     dropdown(
@@ -162,6 +162,7 @@ mod_format_server <- function(id) {
     # Toggle UI ----
     # * Results ----
     output$show_result_custom <- renderText({
+      req(input$result_format)
       if (input$result_format == "custom") {
         "show"
       } else {
@@ -171,6 +172,7 @@ mod_format_server <- function(id) {
     outputOptions(output, "show_result_custom", suspendWhenHidden = FALSE)
 
     output$show_result_upload <- renderText({
+      req(input$result_format)
       chk <- !input$result_format %in% c("custom", "blank")
       chk2 <- input$result_format == "custom" & !is.null(val$custom_result)
 
@@ -193,6 +195,7 @@ mod_format_server <- function(id) {
 
     # * Sites ----
     output$show_site_custom <- renderText({
+      req(input$site_format)
       if (input$site_format == "custom") {
         "show"
       } else {
@@ -202,6 +205,7 @@ mod_format_server <- function(id) {
     outputOptions(output, "show_site_custom", suspendWhenHidden = FALSE)
 
     output$show_site_upload <- renderText({
+      req(input$site_format)
       chk <- !input$site_format %in% c("custom", "blank")
       chk2 <- input$site_format == "custom" & !is.null(val$custom_site)
 

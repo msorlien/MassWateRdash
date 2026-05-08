@@ -17,7 +17,9 @@ ui <- page_navbar(
       });"
     )),
     tags$style(HTML(
-      ".rhandsontable .htCore thead th { white-space: nowrap; }"
+      ".rhandsontable .htCore thead th { white-space: nowrap; }
+       .modal-dialog.modal-xl { max-width: 90vw; }
+       .value-box-value { font-size: 1.5rem !important; }"
     ))
   ),
   title = span(

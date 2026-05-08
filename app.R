@@ -19,7 +19,9 @@ ui <- page_navbar(
     tags$style(HTML(
       ".rhandsontable .htCore thead th { white-space: nowrap; }
        .modal-dialog.modal-xl { max-width: 90vw; }
-       .value-box-value { font-size: 1.5rem !important; }"
+       .value-box-value { font-size: 1.5rem !important; }
+       .fill-height { height: calc(100vh - 58px); overflow: hidden; }
+       .card-scroll .card-body { overflow-y: auto; }"
     ))
   ),
   title = span(
@@ -27,7 +29,22 @@ ui <- page_navbar(
     "MassWateR Dashboard"
   ),
 
-  nav_panel("Upload & Validate",
+  nav_panel(
+    class = 'fill-height',
+    title = "Overview",
+    value = 'overview',
+    navset_card_underline(
+      full_screen = TRUE,
+      height = '100%',
+      nav_panel(
+        title = '',
+        class = 'card-scroll',
+        shiny::includeMarkdown('www/overview.md')
+      )
+    )
+  ),
+
+  nav_panel("1 Upload & Validate",
 
     page_sidebar(
 
@@ -88,7 +105,7 @@ ui <- page_navbar(
   ),
   
   # Outlier assessment -----
-  nav_panel("Outlier assessment",
+  nav_panel("2 Outlier assessment",
     page_sidebar(
       sidebar = sidebar(
         title = "Options",
@@ -118,7 +135,7 @@ ui <- page_navbar(
   ),
   
   # QC reporting -----
-  nav_panel("QC reporting",
+  nav_panel("3 QC reporting",
     navset_card_underline(
       full_screen = T,
       nav_panel(
@@ -197,7 +214,7 @@ ui <- page_navbar(
   ),
   
   # WQX output -----
-  nav_panel("WQX output",
+  nav_panel("4 WQX output",
     navset_card_underline(
       full_screen = T,
       nav_panel(
@@ -220,7 +237,7 @@ ui <- page_navbar(
   ),
   
   # Visualize -----
-  nav_panel("Visualize",
+  nav_panel("5 Visualize",
             
     page_sidebar(
       sidebar = sidebar(

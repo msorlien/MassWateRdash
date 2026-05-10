@@ -24,6 +24,16 @@ ui <- page_navbar(
        .card-scroll .card-body { overflow-y: auto; }"
     ))
   ),
+  footer = tagList(
+    tags$div(
+      id    = "loading-indicator",
+      style = "display: none; position: fixed; bottom: 15px; right: 15px; z-index: 9999;
+               background: rgba(0,0,0,0.6); color: white; padding: 5px 12px;
+               border-radius: 4px; font-size: 0.85em;",
+      bs_icon("arrow-repeat"), " Loading..."),
+    tags$style(
+      "html.shiny-busy #loading-indicator { display: block !important; }")
+  ),
   title = span(
     img(src = "toimg/logo.png", height = "40px", style = "margin-right: 10px;"),
     "MassWateR Dashboard"

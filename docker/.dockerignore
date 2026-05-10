@@ -1,0 +1,7 @@
+.git
+.Rproj.user
+*.Rproj
+docker
+tests
+.gitignore
+README.md

@@ -4,9 +4,9 @@
 
 <h2 style = 'text-align: center;'>WELCOME TO THE MASSWATER DASHBOARD!</h2>
 
-<img src='toimg/logo.png' style='display: block; margin: 1rem auto 1.5rem auto; width: 180px;' />
+<a href='https://massbays-tech.github.io/MassWateR' target='_blank'><img src='toimg/logo.png' style='display: block; margin: 1rem auto 1.5rem auto; width: 180px;' /></a>
 
-**MassWateR** is an R package for quality control, analysis, and sharing of discrete surface water quality data. The package was created through partnership with the [Mass Bays National Estuary Partnership](https://www.mass.gov/orgs/massachusetts-bays-national-estuary-partnership).
+**MassWateR** is an R package for quality control, analysis, and sharing of discrete surface water quality data. The package was created through partnership with the <a href='https://www.mass.gov/orgs/massachusetts-bays-national-estuary-partnership' target='_blank'>Mass Bays National Estuary Partnership</a>.
 
 ### About this Dashboard
 
@@ -20,18 +20,18 @@ This dashboard provides a step-by-step interface to the MassWateR workflow:
 
 ### Getting Started
 
-Upload your data files in the <a href='#' onclick='document.querySelector(".navbar-nav a[data-value=\"1 Upload &amp; Validate\"]").click(); return false;'>Upload & Validate</a> tab to begin. Required datasets and formatting instructions are described in the [Data Input & Checks](https://massbays-tech.github.io/MassWateR/articles/inputs.html) vignette.
+Upload your data files in the <a href='#' onclick='document.querySelector(".navbar-nav a[data-value=\"1 Upload &amp; Validate\"]").click(); return false;'>Upload & Validate</a> tab to begin. Required datasets and formatting instructions are described in the <a href='https://massbays-tech.github.io/MassWateR/articles/inputs.html' target='_blank'>Data Input & Checks</a> vignette.
 
 ### Resources
 
-- [MassWateR Package Documentation](https://massbays-tech.github.io/MassWateR/)
-- [Community Forum](https://massbays.discourse.group/)
-- [GitHub Repository](https://github.com/massbays-tech/MassWateR/)
-- [CRAN Page](https://cloud.r-project.org/package=MassWateR)
+- <a href='https://massbays-tech.github.io/MassWateR/' target='_blank'>MassWateR Package Documentation</a>
+- <a href='https://massbays.discourse.group/' target='_blank'>Community Forum</a>
+- <a href='https://github.com/massbays-tech/MassWateR/' target='_blank'>GitHub Repository</a>
+- <a href='https://cloud.r-project.org/package=MassWateR' target='_blank'>CRAN Page</a>
 
 ### Citation
 
-Beck, M.W., Wetherill, B., Carr, J. 2023. MassWateR: Improving Quality Control, Analysis, and Sharing of Water Quality Data. *PLOS ONE*. 18(11):e0293737. [10.1371/journal.pone.0293737](https://doi.org/10.1371/journal.pone.0293737)
+Beck, M.W., Wetherill, B., Carr, J. 2023. MassWateR: Improving Quality Control, Analysis, and Sharing of Water Quality Data. *PLOS ONE*. 18(11):e0293737. <a href='https://doi.org/10.1371/journal.pone.0293737' target='_blank'>10.1371/journal.pone.0293737</a>
 
 ### Developers
 

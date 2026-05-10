@@ -257,7 +257,8 @@ ui <- page_navbar(
         uiOutput("dtrng2"),
         uiOutput("sites2"),
         uiOutput("notmap"),
-        uiOutput("vizui")
+        uiOutput("vizui"),
+        uiOutput("confint_ui")
       ),
       
       navset_card_underline(
@@ -389,13 +390,10 @@ server <- function(input, output, session) {
   output$notmap <- renderUI({
 
     if(input$viz_selected != 'Map')
-      tagList(
-        selectInput("thresh", "Treshold type", choices = c('fresh', 'marine', 'none')),
-        selectInput("confint2", "Show confidence", choices = c(F, T))    
-      )
-    
+      selectInput("thresh", "Treshold type", choices = c('fresh', 'marine', 'none'))
+
   })
-  
+
   output$vizui <- renderUI({
     
     out <- NULL
@@ -405,11 +403,28 @@ server <- function(input, output, session) {
     
     if(input$viz_selected == 'Date')
       out <- selectInput("group2", "Plot grouping", choices = c("site", "locgroup", "all"))
-  
+
     return(out)
-    
+
   })
-  
+
+  output$confint_ui <- renderUI({
+
+    viz <- input$viz_selected
+
+    show <- if(viz %in% c('Season', 'Site')) {
+      isTRUE(input$type2 %in% c('bar', 'jitterbar'))
+    } else if(viz == 'Date') {
+      isTRUE(input$group2 %in% c('locgroup', 'all'))
+    } else {
+      FALSE
+    }
+
+    if(show)
+      selectInput("confint2", "Show confidence", choices = c(F, T))
+
+  })
+
   output$dwnldoutwrdbutt <- renderUI({
     
     req(fsetls()$res, fsetls()$acc) 
@@ -1046,7 +1061,7 @@ server <- function(input, output, session) {
     dtrng2 <- as.character(input$dtrng2)
     sites2 <- input$sites2
     type2 <- input$type2
-    confint2 <- as.logical(input$confint2)
+    confint2 <- isTRUE(as.logical(input$confint2))
     
     req(fsetls()$res, fsetls()$acc, param2, dtrng2, sites2)
 
@@ -1063,7 +1078,7 @@ server <- function(input, output, session) {
     dtrng2 <- as.character(input$dtrng2)
     sites2 <- input$sites2
     group2 <- input$group2
-    confint2 <- as.logical(input$confint2)
+    confint2 <- isTRUE(as.logical(input$confint2))
     
     req(fsetls()$res, fsetls()$acc, param2, dtrng2, sites2)
     
@@ -1080,7 +1095,7 @@ server <- function(input, output, session) {
     dtrng2 <- as.character(input$dtrng2)
     sites2 <- input$sites2
     type2 <- input$type2
-    confint2 <- as.logical(input$confint2)
+    confint2 <- isTRUE(as.logical(input$confint2))
     
     req(fsetls()$res, fsetls()$acc, param2, dtrng2, sites2)
     

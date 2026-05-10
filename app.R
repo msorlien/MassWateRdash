@@ -23,7 +23,21 @@ ui <- page_navbar(
        .fill-height { height: calc(100vh - 58px); overflow: hidden; }
        .card-scroll .card-body { overflow-y: auto; }
        .shiny-download-link:hover { filter: brightness(0.88); }
-       #show_format_modal:hover, #open_plot_download:hover { filter: brightness(0.88); }"
+       #show_format_modal:hover, #open_plot_download:hover { filter: brightness(0.88); }
+       :root { --bs-primary: #00A4CF; --bs-primary-rgb: 0, 164, 207; }
+       .progress-bar { background-color: #00A4CF !important; }
+       .nav-pills .nav-link.active { background-color: #00A4CF !important; }
+       .bootstrap-select .dropdown-menu.inner li.selected a,
+       .bootstrap-select .dropdown-menu.inner li.selected a:hover,
+       .bootstrap-select .dropdown-menu .dropdown-item.active,
+       .bootstrap-select .dropdown-menu .dropdown-item:active { background-color: #00A4CF !important; color: white !important; }
+       .bs-actionsbox .btn { background-color: #00A4CF !important; border-color: #00A4CF !important; color: white !important; }
+       .shiny-notification-message { background-color: #00A4CF !important; color: white !important; border-color: #00A4CF !important; }
+       .irs--shiny .irs-bar { background: #00A4CF !important; border-top-color: #00A4CF !important; border-bottom-color: #00A4CF !important; }
+       .irs--shiny .irs-bar--single { border-left-color: #00A4CF !important; }
+       .irs--shiny .irs-handle { border-color: #00A4CF !important; }
+       .irs--shiny .irs-handle.state_hover, .irs--shiny .irs-handle:hover { background-color: #00A4CF !important; }
+       .irs--shiny .irs-from, .irs--shiny .irs-to, .irs--shiny .irs-single { background-color: #00A4CF !important; }"
     ))
   ),
   footer = tagList(

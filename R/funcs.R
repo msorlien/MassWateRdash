@@ -265,11 +265,11 @@ handle_retry <- function(data_name, hot_input, hot_headers_input = NULL,
 #'
 #' @noRd
 fl_status <- function(tester, file_input, data_state) {
-  if (tester) return(HTML("<span style='color:#4287f5'>Using test data</span>"))
+  if (tester) return(HTML("<span style='color:#00A4CF'>Using test data</span>"))
   if (is.null(file_input) && is.null(data_state)) return(HTML("No file uploaded"))
   if (is.null(data_state)) return(HTML("<span style='color:#f54242'>Error loading</span>"))
-  if (is.null(file_input)) HTML("<span style='color:#1e9c3b'>Loaded from format converter</span>")
-  else HTML("<span style='color:#1e9c3b'>Data loaded</span>")
+  if (is.null(file_input)) HTML("<span style='color:#64C147'>Loaded from format converter</span>")
+  else HTML("<span style='color:#64C147'>Data loaded</span>")
 }
 
 # dqo table theme

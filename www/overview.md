@@ -20,7 +20,7 @@ This dashboard provides a step-by-step interface to the MassWateR workflow:
 
 ### Getting Started
 
-Upload your data files in the <a href='#' onclick='document.querySelector(".navbar-nav a[data-value=\"1 Upload &amp; Validate\"]").click(); return false;'>Upload & Validate</a> tab to begin. Required datasets and formatting instructions are described in the <a href='https://massbays-tech.github.io/MassWateR/articles/inputs.html' target='_blank'>Data Input & Checks</a> vignette.
+Upload your data files in the <a href='#' onclick='document.querySelector(".navbar-nav a[data-value=\"1 Upload &amp; Validate\"]").click(); return false;'>Upload & Validate</a> tab to begin. An overview of MassWateR's functionality, required datasets, and formatting instructions are described in the package's <a href='https://massbays-tech.github.io/MassWateR/articles/MassWateR.html' target='_blank'>Getting Started</a> vignette.
 
 ### Resources
 

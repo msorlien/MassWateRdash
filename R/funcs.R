@@ -26,7 +26,8 @@ file_signatures <- list(
   accdat    = c("Value Range", "MDL"),
   frecomdat = c("% Completeness"),
   sitdat    = c("Monitoring Location Latitude", "Monitoring Location Longitude"),
-  wqxdat    = c("Sampling Method Context", "Analytical Method Context")
+  wqxdat    = c("Sampling Method Context", "Analytical Method Context"),
+  censdat = c("Parameter", "Missed and Censored Records")
 )
 
 file_labels <- c(
@@ -34,7 +35,8 @@ file_labels <- c(
   accdat    = "DQO Accuracy data",
   frecomdat = "DQO Frequency & Completeness data",
   sitdat    = "Site data",
-  wqxdat    = "WQX metadata"
+  wqxdat    = "WQX metadata",
+  censdat = "Censored data"
 )
 
 is_column_error <- function(msg) {
@@ -72,8 +74,9 @@ raw_read_fns <- list(
         col_types = 'text')
     ) |> dplyr::rename(`% Completeness` = `...7`)
   },
-  sitdat = function(path) readxl::read_excel(path, na = c('NA', 'na', '')),
-  wqxdat = function(path) suppressWarnings(readxl::read_excel(path, na = c('NA', 'na', ''), col_types = 'text'))
+  sitdat    = function(path) readxl::read_excel(path, na = c('NA', 'na', '')),
+  wqxdat    = function(path) suppressWarnings(readxl::read_excel(path, na = c('NA', 'na', ''), col_types = 'text')),
+  censdat = function(path) readxl::read_excel(path, na = c('NA', 'na', ''))
 )
 
 # Retry functions: run check + format on an edited data frame from handsontable
@@ -85,8 +88,9 @@ retry_fns <- list(
   },
   accdat = function(df) formMWRacc(checkMWRacc(df, warn = TRUE)),
   frecomdat = function(df) formMWRfrecom(checkMWRfrecom(df, warn = TRUE)),
-  sitdat = function(df) checkMWRsites(df),
-  wqxdat = function(df) formMWRwqx(checkMWRwqx(df, warn = TRUE))
+  sitdat    = function(df) checkMWRsites(df),
+  wqxdat    = function(df) formMWRwqx(checkMWRwqx(df, warn = TRUE)),
+  censdat = function(df) formMWRcens(checkMWRcens(df, warn = TRUE))
 )
 
 # file upload for observers

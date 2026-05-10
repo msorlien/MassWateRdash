@@ -73,7 +73,8 @@ ui <- page_navbar(
         fileInput("accdat", "Upload DQO Accuracy Data (.xlsx)", accept = ".xlsx"),
         fileInput("frecomdat", "Upload DQO Frequency & Completeness Data (.xlsx)", accept = ".xlsx"),
         fileInput("sitdat", "Upload Site Data (.xlsx)", accept = ".xlsx"),
-        fileInput("wqxdat", "Upload WQX Meta Data (.xlsx)", accept = ".xlsx")
+        fileInput("wqxdat", "Upload WQX Meta Data (.xlsx)", accept = ".xlsx"),
+        fileInput("censdat", "Upload Censored Data (.xlsx) (optional)", accept = ".xlsx")
       ),
       
       layout_columns(
@@ -97,6 +98,10 @@ ui <- page_navbar(
         value_box(
           title = "WQX Data",
           value = htmlOutput("wqxdat_status")
+        ),
+        value_box(
+          title = "Censored Data",
+          value = htmlOutput("censdat_status")
         )
       ),
       
@@ -107,7 +112,8 @@ ui <- page_navbar(
         uiOutput("accdat_editor"),
         uiOutput("frecomdat_editor"),
         uiOutput("sitdat_editor"),
-        uiOutput("wqxdat_editor")
+        uiOutput("wqxdat_editor"),
+        uiOutput("censdat_editor")
       )
 
     )
@@ -490,21 +496,24 @@ server <- function(input, output, session) {
     accdat = NULL,
     frecomdat = NULL,
     sitdat = NULL,
-    wqxdat = NULL
+    wqxdat = NULL,
+    censdat = NULL
   )
   raw_data_states <<- reactiveValues(
     resdat = NULL,
     accdat = NULL,
     frecomdat = NULL,
     sitdat = NULL,
-    wqxdat = NULL
+    wqxdat = NULL,
+    censdat = NULL
   )
   edit_visible <<- reactiveValues(
     resdat = FALSE,
     accdat = FALSE,
     frecomdat = FALSE,
     sitdat = FALSE,
-    wqxdat = FALSE
+    wqxdat = FALSE,
+    censdat = FALSE
   )
   
   # Observers for each data upload
@@ -527,6 +536,10 @@ server <- function(input, output, session) {
   observeEvent(input$wqxdat, {
    fl_upload(input$wqxdat, readMWRwqx, "wqxdat")
   })
+
+  observeEvent(input$censdat, {
+    fl_upload(input$censdat, readMWRcens, "censdat")
+  })
   
   # Status outputs
   output$resdat_status <- renderUI({
@@ -548,6 +561,10 @@ server <- function(input, output, session) {
   output$wqxdat_status <- renderUI({
     fl_status(input$tester, input$wqxdat, data_states$wqxdat)
   })
+
+  output$censdat_status <- renderUI({
+    fl_status(input$tester, input$censdat, data_states$censdat)
+  })
   
   # Output validation messages
   output$validation_messages <- renderUI({
@@ -565,7 +582,8 @@ server <- function(input, output, session) {
     list(name = "accdat",    label = "DQO Accuracy Data"),
     list(name = "frecomdat", label = "DQO Frequency & Completeness Data"),
     list(name = "sitdat",    label = "Site Data"),
-    list(name = "wqxdat",    label = "WQX Meta Data")
+    list(name = "wqxdat",    label = "WQX Meta Data"),
+    list(name = "censdat", label = "Censored Data")
   )
 
   for (fd in file_defs) {
@@ -742,14 +760,16 @@ server <- function(input, output, session) {
         frecomdat <- data_states$frecomdat
         sitdat <- data_states$sitdat
         wqxdat <- data_states$wqxdat
+        censdat <- data_states$censdat
     }
-    
+
     if(input$tester == T){
       resdat <- readMWRresults(system.file("extdata", "ExampleResults.xlsx", package = "MassWateR"), runchk = F)
       accdat <- readMWRacc(system.file("extdata", "ExampleDQOAccuracy.xlsx", package = "MassWateR"), runchk = F)
       frecomdat <- readMWRfrecom(system.file("extdata", "ExampleDQOFrequencyCompleteness.xlsx", package = "MassWateR"), runchk = F)
       sitdat <- readMWRsites(system.file("extdata", "ExampleSites.xlsx", package = "MassWateR"), runchk = F)
-      wqxdat <- readMWRwqx(system.file("extdata", "ExampleWQX.xlsx", package = "MassWateR"), runchk = F) 
+      wqxdat <- readMWRwqx(system.file("extdata", "ExampleWQX.xlsx", package = "MassWateR"), runchk = F)
+      censdat <- readMWRcens(system.file("extdata", "ExampleCensored.xlsx", package = "MassWateR"), runchk = F)
     }
 
     out <- list(
@@ -757,7 +777,8 @@ server <- function(input, output, session) {
       acc = accdat,
       frecom = frecomdat,
       sit = sitdat,
-      wqx = wqxdat
+      wqx = wqxdat,
+      cens = censdat
     )
 
     return(out)
@@ -908,7 +929,7 @@ server <- function(input, output, session) {
     
     req(fsetls()$res, fsetls()$frecom)
     
-    out <- tabMWRcom(res = fsetls()$res, frecom = fsetls()$frecom, warn = F, parameterwd = 1.15)
+    out <- tabMWRcom(res = fsetls()$res, frecom = fsetls()$frecom, cens = fsetls()$cens, warn = F, parameterwd = 1.15)
     out <- out |> 
       flextable::width(width = (wd - 3.15) / (flextable::ncol_keys(out) - 2), j = 2:(flextable::ncol_keys(out) - 1)) |>
       flextable::htmltools_value()

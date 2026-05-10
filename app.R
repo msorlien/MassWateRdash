@@ -21,7 +21,8 @@ ui <- page_navbar(
        .modal-dialog.modal-xl { max-width: 90vw; }
        .value-box-value { font-size: 1.5rem !important; }
        .fill-height { height: calc(100vh - 58px); overflow: hidden; }
-       .card-scroll .card-body { overflow-y: auto; }"
+       .card-scroll .card-body { overflow-y: auto; }
+       .shiny-download-link:hover { filter: brightness(0.88); }"
     ))
   ),
   footer = tagList(
@@ -62,8 +63,8 @@ ui <- page_navbar(
         title = "Upload Data Files",
         width = 500,
         div(style = "display: flex; align-items: center; gap: 12px;",
-          shinyWidgets::materialSwitch('tester', "Test mode", FALSE),
-          uiOutput("download_data_btn")
+          div(style = "flex: 0 0 auto;", shinyWidgets::materialSwitch('tester', "Test mode", FALSE)),
+          div(style = "flex: 1;", uiOutput("download_data_btn"))
         ),
         actionButton(
           "show_format_modal",
@@ -438,7 +439,7 @@ server <- function(input, output, session) {
     
     req(fsetls()$res, fsetls()$acc) 
     
-    shinyWidgets::downloadBttn('dwnldoutwrd', 'Download outlier report: Word', style = 'simple', block = T, color = 'success')
+    dl_btn('dwnldoutwrd', 'Download outlier report: Word')
     
   })
   
@@ -446,7 +447,7 @@ server <- function(input, output, session) {
     
     req(fsetls()$res, fsetls()$acc)
     
-    shinyWidgets::downloadBttn('dwnldoutzip', 'Download outlier report: Zipped images', style = 'simple', block = T, color = 'success')
+    dl_btn('dwnldoutzip', 'Download outlier report: Zipped images')
     
   })
   
@@ -454,7 +455,7 @@ server <- function(input, output, session) {
     
     req(fsetls()$res, fsetls()$acc, fsetls()$frecom)  
     
-    shinyWidgets::downloadBttn('dwnldqc', 'Download quality control report', style = 'simple', block = T, color = 'success')
+    dl_btn('dwnldqc', 'Download quality control report')
     
   })
   
@@ -462,7 +463,7 @@ server <- function(input, output, session) {
     
     req(req(fsetls()$res, fsetls()$acc, fsetls()$sit, fsetls()$wqx)) 
     
-    shinyWidgets::downloadBttn('dwnldwqx', 'Download WQX workbook', style = 'simple', block = T, color = 'success')
+    dl_btn('dwnldwqx', 'Download WQX workbook')
     
   })
   
@@ -573,13 +574,7 @@ server <- function(input, output, session) {
     any_loaded <- isTRUE(input$tester) ||
       any(!sapply(reactiveValuesToList(data_states), is.null))
     if (!any_loaded) return(NULL)
-    shinyWidgets::downloadBttn(
-      "download_data",
-      label = "Download datasets",
-      style = "simple",
-      color = "primary",
-      size = "sm"
-    )
+    dl_btn("download_data", "Download data", size = "sm")
   })
 
   output$download_data <- downloadHandler(

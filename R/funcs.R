@@ -381,3 +381,11 @@ dropdown <- function(
     multiple = multiple
   )
 }
+
+dl_btn <- function(id, label, block = TRUE, size = "md") {
+  btn <- shinyWidgets::downloadBttn(id, label = label, style = "simple", block = block, size = size)
+  htmltools::tagAppendAttributes(
+    btn,
+    style = "background-color: #64C147 !important; border-color: #64C147 !important; color: white !important;"
+  )
+}

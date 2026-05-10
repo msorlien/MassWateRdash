@@ -47,16 +47,6 @@ mod_format_ui <- function(id, in_modal = FALSE) {
         accept = ".xlsx"
       )
     ),
-    conditionalPanel(
-      condition = paste0(
-        'output["', ns("show_result_download"), '"] == "show"'
-      ),
-      downloadButton(
-        ns("result_download"),
-        "Download Results (.xlsx)",
-        style = "width: fit-content;"
-      )
-    ),
     # * Sites ----
     h2("Site Metadata"),
     dropdown(
@@ -91,16 +81,6 @@ mod_format_ui <- function(id, in_modal = FALSE) {
         ns("site_upload"),
         "Upload Site Metadata (.xlsx)",
         accept = ".xlsx"
-      )
-    ),
-    conditionalPanel(
-      condition = paste0(
-        'output["', ns("show_site_download"), '"] == "show"'
-      ),
-      downloadButton(
-        ns("site_download"),
-        "Download Sites (.xlsx)",
-        style = "width: fit-content;"
       )
     ),
   )
@@ -184,15 +164,6 @@ mod_format_server <- function(id) {
     })
     outputOptions(output, "show_result_upload", suspendWhenHidden = FALSE)
 
-    output$show_result_download <- renderText({
-      if (!is.null(val$dat_result)) {
-        return("show")
-      } else {
-        return("hide")
-      }
-    })
-    outputOptions(output, "show_result_download", suspendWhenHidden = FALSE)
-
     # * Sites ----
     output$show_site_custom <- renderText({
       req(input$site_format)
@@ -216,15 +187,6 @@ mod_format_server <- function(id) {
       }
     })
     outputOptions(output, "show_site_upload", suspendWhenHidden = FALSE)
-
-    output$show_site_download <- renderText({
-      if (!is.null(val$dat_site)) {
-        return("show")
-      } else {
-        return("hide")
-      }
-    })
-    outputOptions(output, "show_site_download", suspendWhenHidden = FALSE)
 
     # Upload data -----
     # * Result Format ----
@@ -355,25 +317,6 @@ mod_format_server <- function(id) {
       }
     }) |>
       bindEvent(input$site_upload)
-
-    # Download data ----
-    output$result_download <- downloadHandler(
-      filename = function() {
-        "masswater_results.xlsx"
-      },
-      content = function(file) {
-        writexl::write_xlsx(val$dat_result, path = file)
-      }
-    )
-
-    output$site_download <- downloadHandler(
-      filename = function() {
-        "masswater_sites.xlsx"
-      },
-      content = function(file) {
-        writexl::write_xlsx(val$dat_site, path = file)
-      }
-    )
 
     # UI messages ----
     output$result_status <- renderUI({

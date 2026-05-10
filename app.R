@@ -61,7 +61,10 @@ ui <- page_navbar(
       sidebar = sidebar(
         title = "Upload Data Files",
         width = 500,
-        shinyWidgets::materialSwitch('tester', "Test mode", FALSE),
+        div(style = "display: flex; align-items: center; gap: 12px;",
+          shinyWidgets::materialSwitch('tester', "Test mode", FALSE),
+          uiOutput("download_data_btn")
+        ),
         actionButton(
           "show_format_modal",
           "Convert from another format",
@@ -565,7 +568,47 @@ server <- function(input, output, session) {
   output$censdat_status <- renderUI({
     fl_status(input$tester, input$censdat, data_states$censdat)
   })
-  
+
+  output$download_data_btn <- renderUI({
+    any_loaded <- isTRUE(input$tester) ||
+      any(!sapply(reactiveValuesToList(data_states), is.null))
+    if (!any_loaded) return(NULL)
+    shinyWidgets::downloadBttn(
+      "download_data",
+      label = "Download datasets",
+      style = "simple",
+      color = "primary",
+      size = "sm"
+    )
+  })
+
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste0("MassWateR_data_", format(Sys.time(), "%Y%m%d"), ".zip")
+    },
+    content = function(file) {
+      fls <- fsetls()
+      file_map <- list(
+        "results.csv"                = fls$res,
+        "accuracy.csv"               = fls$acc,
+        "frequency_completeness.csv" = fls$frecom,
+        "sites.csv"                  = fls$sit,
+        "wqx_metadata.csv"           = fls$wqx,
+        "censored.csv"               = fls$cens
+      )
+      tmp_dir <- tempfile(pattern = "masswater_dl_")
+      dir.create(tmp_dir)
+      for (nm in names(file_map)) {
+        df <- file_map[[nm]]
+        if (!is.null(df))
+          write.csv(df, file.path(tmp_dir, nm), row.names = FALSE)
+      }
+      old_wd <- setwd(tmp_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+      utils::zip(file, list.files(tmp_dir))
+    }
+  )
+
   # Output validation messages
   output$validation_messages <- renderUI({
     msg <- validation_log()

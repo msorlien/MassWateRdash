@@ -22,7 +22,8 @@ ui <- page_navbar(
        .value-box-value { font-size: 1.5rem !important; }
        .fill-height { height: calc(100vh - 58px); overflow: hidden; }
        .card-scroll .card-body { overflow-y: auto; }
-       .shiny-download-link:hover { filter: brightness(0.88); }"
+       .shiny-download-link:hover { filter: brightness(0.88); }
+       #show_format_modal:hover, #open_plot_download:hover { filter: brightness(0.88); }"
     ))
   ),
   footer = tagList(
@@ -69,9 +70,10 @@ ui <- page_navbar(
         actionButton(
           "show_format_modal",
           "Convert from another format",
-          icon = icon("right-left"),
+          icon  = icon("right-left"),
           width = "100%",
-          class = "btn-outline-secondary mb-3"
+          class = "mb-3",
+          style = "background-color: #64C147; border-color: #64C147; color: white;"
         ),
         fileInput("resdat", "Upload Results Data (.xlsx)", accept = ".xlsx"),
         fileInput("accdat", "Upload DQO Accuracy Data (.xlsx)", accept = ".xlsx"),
@@ -268,7 +270,8 @@ ui <- page_navbar(
         uiOutput("sites2"),
         uiOutput("notmap"),
         uiOutput("vizui"),
-        uiOutput("confint_ui")
+        uiOutput("confint_ui"),
+        uiOutput("download_plot_btn")
       ),
       
       navset_card_underline(
@@ -1112,6 +1115,82 @@ server <- function(input, output, session) {
   )
   
   # Visualize ----
+
+  output$download_plot_btn <- renderUI({
+    req(fsetls()$res, input$param2)
+    actionButton(
+      "open_plot_download", "Download plot",
+      icon  = icon("download"),
+      width = "100%",
+      style = "background-color: #64C147; border-color: #64C147; color: white;"
+    )
+  })
+
+  observeEvent(input$open_plot_download, {
+    showModal(modalDialog(
+      title = "Download plot",
+      size  = "s",
+      numericInput("plot_width",  "Width (inches)",   value = 10,  min = 1, max = 30),
+      numericInput("plot_height", "Height (inches)",  value = 6,   min = 1, max = 30),
+      numericInput("plot_dpi",    "Resolution (DPI)", value = 150, min = 72, max = 600),
+      selectInput("plot_format",  "Format",
+                  choices = c("PNG" = "png", "PDF" = "pdf", "SVG" = "svg")),
+      footer = tagList(
+        dl_btn("download_plot", "Download"),
+        modalButton("Cancel")
+      ),
+      easyClose = TRUE
+    ))
+  })
+
+  output$download_plot <- downloadHandler(
+    filename = function() {
+      paste0(input$param2, "_", tolower(input$viz_selected), ".", input$plot_format)
+    },
+    content = function(file) {
+      fset     <- fsetls()
+      viz      <- input$viz_selected
+      param2   <- input$param2
+      dtrng2   <- as.character(input$dtrng2)
+      sites2   <- input$sites2
+      thresh   <- input$thresh
+      confint2 <- isTRUE(as.logical(input$confint2))
+
+      p <- if (viz == "Season") {
+        anlzMWRseason(res = fset$res, param = param2, acc = fset$acc, sit = fset$sit,
+                      thresh = thresh, type = input$type2, dtrng = dtrng2,
+                      site = sites2, confint = confint2, bssize = 18) +
+          ggplot2::labs(title = NULL)
+      } else if (viz == "Date") {
+        anlzMWRdate(res = fset$res, param = param2, acc = fset$acc, sit = fset$sit,
+                    thresh = thresh, group = input$group2, dtrng = dtrng2,
+                    site = sites2, confint = confint2, bssize = 18) +
+          ggplot2::labs(title = NULL)
+      } else if (viz == "Site") {
+        anlzMWRsite(res = fset$res, param = param2, acc = fset$acc, sit = fset$sit,
+                    thresh = thresh, type = input$type2, dtrng = dtrng2,
+                    site = sites2, confint = confint2, bssize = 18) +
+          ggplot2::labs(title = NULL)
+      } else {
+        watsel <- if (isTRUE(input$watsel == "NULL")) NULL else input$watsel
+        mapsel <- if (isTRUE(input$mapsel == "NULL")) NULL else input$mapsel
+        anlzMWRmap(res = fset$res, param = param2, acc = fset$acc, sit = fset$sit,
+                   dtrng = dtrng2, site = sites2, addwater = watsel,
+                   maptype = mapsel, bssize = 18) +
+          ggplot2::labs(title = NULL)
+      }
+
+      ggplot2::ggsave(
+        filename = file,
+        plot     = p,
+        width    = input$plot_width,
+        height   = input$plot_height,
+        dpi      = input$plot_dpi,
+        device   = input$plot_format
+      )
+    }
+  )
+
   output$season_plot <- renderPlot({
     
     # inputs

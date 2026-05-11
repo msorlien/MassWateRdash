@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     libharfbuzz-dev \
     libfribidi-dev \
     pandoc \
+    perl \
     && rm -rf /var/lib/apt/lists/*
 
 # TinyTeX for PDF report generation; tlmgr path add makes binaries available to the shiny user
@@ -14,9 +15,9 @@ RUN R -e "install.packages('tinytex')" && \
 
 # CRAN packages not already in rocker/shiny-verse
 RUN R -e "install.packages(c( \
-    'bslib', 'bsicons', 'shinyWidgets', \
+    'bslib', 'bsicons', 'here', 'shinyWidgets', \
     'writexl', 'reactable', 'flextable', \
-    'rhandsontable', 'remotes' \
+    'markdown', 'rhandsontable', 'remotes' \
   ), repos='https://packagemanager.posit.co/cran/latest')"
 
 # GitHub packages

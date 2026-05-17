@@ -410,23 +410,12 @@ server <- function(input, output, session) {
     
     req(fsetls()$res, param2, dtrng2)
 
-    tosel <- fsetls()$res |> 
-      dplyr::filter(`Characteristic Name` == param2) |> 
-      dplyr::filter(`Activity Start Date` >= dtrng2[1] & `Activity Start Date` <= dtrng2[2]) |> 
-      dplyr::pull(`Monitoring Location ID`) |> 
-      unique() |> 
-      sort()
-    
-    pickerInput("sites2", "Select sites", choices = tosel, selected = tosel,
-      options = pickerOptions(
-        `actions-box`        = TRUE,
-        liveSearch           = TRUE,
-        liveSearchPlaceholder = "Search sites...",
-        liveSearchNormalize  = TRUE,
-        selectedTextFormat   = "count > 3",
-        countSelectedText    = "{0} of {1} sites selected"
-      ),
-      multiple = TRUE)
+    tosel <- fsetls()$res |>
+      dplyr::filter(`Characteristic Name` == param2) |>
+      dplyr::filter(`Activity Start Date` >= dtrng2[1] & `Activity Start Date` <= dtrng2[2]) |>
+      dplyr::pull(`Monitoring Location ID`)
+
+    dropdown("sites2", "Select sites", choices = tosel)
  
   })
   

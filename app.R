@@ -27,15 +27,22 @@ ui <- page_navbar(
        :root { --bs-primary: #00A4CF; --bs-primary-rgb: 0, 164, 207; }
        .progress-bar { background-color: #00A4CF !important; }
        .nav-pills .nav-link.active { background-color: #00A4CF !important; }
+       .bootstrap-select > .dropdown-toggle { background-color: #fff !important; border: 1px solid #6c757d !important; color: #212529 !important; box-shadow: none !important; padding: 0.375rem 0.75rem !important; line-height: 1.5 !important; font-size: 1rem !important; }
+       .bootstrap-select > .dropdown-toggle:hover { background-color: #fff !important; border-color: #6c757d !important; box-shadow: none !important; }
+       .bootstrap-select > .dropdown-toggle:focus, .bootstrap-select.show > .dropdown-toggle { background-color: #fff !important; border-color: #86b7fe !important; box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25) !important; }
+       .bootstrap-select .filter-option-inner-inner { font-size: 0.875rem !important; }
+       .bootstrap-select .dropdown-menu .dropdown-item { font-size: 0.875rem !important; }
        .bootstrap-select .dropdown-menu.inner li.selected a,
        .bootstrap-select .dropdown-menu.inner li.selected a:hover,
        .bootstrap-select .dropdown-menu .dropdown-item.active,
        .bootstrap-select .dropdown-menu .dropdown-item:active { background-color: #00A4CF !important; color: white !important; }
-       .bs-actionsbox .btn { background-color: #00A4CF !important; border-color: #00A4CF !important; color: white !important; }
+       .bs-actionsbox .btn-group { display: flex !important; gap: 6px; }
+       .bs-actionsbox .btn { background-color: #00A4CF !important; border-color: #00A4CF !important; color: white !important; border-radius: 4px !important; flex: 1; }
        .shiny-notification-message { background-color: #00A4CF !important; color: white !important; border-color: #00A4CF !important; }
        .irs--shiny .irs-bar { background: #00A4CF !important; border-top-color: #00A4CF !important; border-bottom-color: #00A4CF !important; }
        .irs--shiny .irs-bar--single { border-left-color: #00A4CF !important; }
-       .irs--shiny .irs-handle { border-color: #00A4CF !important; }
+       .irs--shiny .irs-handle { border-color: #00A4CF !important; background-color: #00A4CF !important; }
+       .irs--shiny .irs-handle > i:first-child { background-color: #00A4CF !important; }
        .irs--shiny .irs-handle.state_hover, .irs--shiny .irs-handle:hover { background-color: #00A4CF !important; }
        .irs--shiny .irs-from, .irs--shiny .irs-to, .irs--shiny .irs-single { background-color: #00A4CF !important; }"
     ))
@@ -410,8 +417,17 @@ server <- function(input, output, session) {
       unique() |> 
       sort()
     
-    selectInput("sites2", "Select sites", choices = tosel, selected = tosel, selectize = T, multiple = T)
-    
+    pickerInput("sites2", "Select sites", choices = tosel, selected = tosel,
+      options = pickerOptions(
+        `actions-box`        = TRUE,
+        liveSearch           = TRUE,
+        liveSearchPlaceholder = "Search sites...",
+        liveSearchNormalize  = TRUE,
+        selectedTextFormat   = "count > 3",
+        countSelectedText    = "{0} of {1} sites selected"
+      ),
+      multiple = TRUE)
+ 
   })
   
   output$notmap <- renderUI({

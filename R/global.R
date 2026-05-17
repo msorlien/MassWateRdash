@@ -4,6 +4,7 @@ library(bsicons)
 library(MassWateR)
 library(rhandsontable)
 library(here)
+library(shinyWidgets)
 
 source(here('R/funcs.R'))
 source(here('R/mod_wqformat.R'))

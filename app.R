@@ -422,8 +422,31 @@ server <- function(input, output, session) {
   
   output$notmap <- renderUI({
 
-    if(input$viz_selected != 'Map')
-      selectInput("thresh", "Threshold type", choices = c('fresh', 'marine', 'none'))
+    if(input$viz_selected == 'Map')
+      return(NULL)
+
+    param2 <- input$param2
+    req(param2)
+
+    # Characteristic Name in the results file == Simple Parameter in thresholdMWR,
+    # so filter directly without going through paramsMWR
+    thresh_rows <- thresholdMWR |>
+      dplyr::filter(`Simple Parameter` == param2)
+
+    has_fresh  <- nrow(thresh_rows) > 0 && any(!is.na(thresh_rows$Fresh_1)  | !is.na(thresh_rows$Fresh_2))
+    has_marine <- nrow(thresh_rows) > 0 && any(!is.na(thresh_rows$Marine_1) | !is.na(thresh_rows$Marine_2))
+
+    # Hide entirely when no thresholds exist for this parameter
+    if(!has_fresh && !has_marine)
+      return(NULL)
+
+    choices <- c(
+      if(has_fresh)  'fresh',
+      if(has_marine) 'marine',
+      'none'
+    )
+
+    selectInput("thresh", "Threshold type", choices = choices)
 
   })
 
@@ -1173,7 +1196,7 @@ server <- function(input, output, session) {
       param2   <- input$param2
       dtrng2   <- as.character(input$dtrng2)
       sites2   <- input$sites2
-      thresh   <- input$thresh
+      thresh   <- if(is.null(input$thresh)) 'none' else input$thresh
       confint2 <- isTRUE(as.logical(input$confint2))
 
       p <- if (viz == "Season") {
@@ -1214,7 +1237,7 @@ server <- function(input, output, session) {
   output$season_plot <- renderPlot({
 
     # inputs
-    thresh <- input$thresh
+    thresh <- if(is.null(input$thresh)) 'none' else input$thresh
     param2 <- input$param2
     dtrng2 <- as.character(input$dtrng2)
     sites2 <- input$sites2
@@ -1232,7 +1255,7 @@ server <- function(input, output, session) {
   output$date_plot <- renderPlot({
 
     # inputs
-    thresh <- input$thresh
+    thresh <- if(is.null(input$thresh)) 'none' else input$thresh
     param2 <- input$param2
     dtrng2 <- as.character(input$dtrng2)
     sites2 <- input$sites2
@@ -1250,7 +1273,7 @@ server <- function(input, output, session) {
   output$site_plot <- renderPlot({
 
     # inputs
-    thresh <- input$thresh
+    thresh <- if(is.null(input$thresh)) 'none' else input$thresh
     param2 <- input$param2
     dtrng2 <- as.character(input$dtrng2)
     sites2 <- input$sites2

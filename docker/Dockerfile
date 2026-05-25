@@ -1,11 +1,15 @@
 FROM rocker/shiny-verse:latest
 
-# System libraries for flextable (textshaping) and rmarkdown report generation
+# System libraries for flextable (textshaping), rmarkdown, and sf/units (map rendering)
 RUN apt-get update && apt-get install -y \
     libharfbuzz-dev \
     libfribidi-dev \
     pandoc \
     perl \
+    libudunits2-dev \
+    libgdal-dev \
+    libgeos-dev \
+    libproj-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # TinyTeX for PDF report generation; tlmgr path add makes binaries available to the shiny user

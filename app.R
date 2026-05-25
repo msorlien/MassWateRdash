@@ -402,27 +402,28 @@ server <- function(input, output, session) {
     
   })
   
-  output$sites2 <- renderUI({
-    
-    # inputs
+  # Reactive: valid sites for the current param2 + date range.
+  # Shared by output$sites2 (to populate choices) and the plot guards
+  # (to block rendering when input$sites2 is still stale after a param change).
+  valid_sites2 <- reactive({
     param2 <- input$param2
     dtrng2 <- input$dtrng2
-    
     req(fsetls()$res, param2, dtrng2)
-
-    tosel <- fsetls()$res |>
+    fsetls()$res |>
       dplyr::filter(`Characteristic Name` == param2) |>
       dplyr::filter(`Activity Start Date` >= dtrng2[1] & `Activity Start Date` <= dtrng2[2]) |>
-      dplyr::pull(`Monitoring Location ID`)
+      dplyr::pull(`Monitoring Location ID`) |>
+      unique()
+  })
 
-    dropdown("sites2", "Select sites", choices = tosel)
- 
+  output$sites2 <- renderUI({
+    dropdown("sites2", "Select sites", choices = valid_sites2())
   })
   
   output$notmap <- renderUI({
 
     if(input$viz_selected != 'Map')
-      selectInput("thresh", "Treshold type", choices = c('fresh', 'marine', 'none'))
+      selectInput("thresh", "Threshold type", choices = c('fresh', 'marine', 'none'))
 
   })
 
@@ -1211,7 +1212,7 @@ server <- function(input, output, session) {
   )
 
   output$season_plot <- renderPlot({
-    
+
     # inputs
     thresh <- input$thresh
     param2 <- input$param2
@@ -1219,16 +1220,17 @@ server <- function(input, output, session) {
     sites2 <- input$sites2
     type2 <- input$type2
     confint2 <- isTRUE(as.logical(input$confint2))
-    
-    req(fsetls()$res, fsetls()$acc, param2, dtrng2, sites2)
 
-    anlzMWRseason(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, thresh = thresh, type = type2, dtrng = dtrng2, site = sites2, confint = confint2, bssize = 18) + 
+    req(fsetls()$res, fsetls()$acc, param2, dtrng2, sites2)
+    req(all(sites2 %in% valid_sites2()))
+
+    anlzMWRseason(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, thresh = thresh, type = type2, dtrng = dtrng2, site = sites2, confint = confint2, bssize = 18, warn = FALSE) +
       ggplot2::labs(title = NULL)
-    
+
   })
-  
+
   output$date_plot <- renderPlot({
-    
+
     # inputs
     thresh <- input$thresh
     param2 <- input$param2
@@ -1236,16 +1238,17 @@ server <- function(input, output, session) {
     sites2 <- input$sites2
     group2 <- input$group2
     confint2 <- isTRUE(as.logical(input$confint2))
-    
+
     req(fsetls()$res, fsetls()$acc, param2, dtrng2, sites2)
-    
-    anlzMWRdate(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, thresh = thresh, group = group2, dtrng = dtrng2, site = sites2, confint = confint2, bssize = 18) + 
+    req(all(sites2 %in% valid_sites2()))
+
+    anlzMWRdate(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, thresh = thresh, group = group2, dtrng = dtrng2, site = sites2, confint = confint2, bssize = 18, warn = FALSE) +
       ggplot2::labs(title = NULL)
-    
+
   })
-  
+
   output$site_plot <- renderPlot({
-    
+
     # inputs
     thresh <- input$thresh
     param2 <- input$param2
@@ -1253,31 +1256,33 @@ server <- function(input, output, session) {
     sites2 <- input$sites2
     type2 <- input$type2
     confint2 <- isTRUE(as.logical(input$confint2))
-    
+
     req(fsetls()$res, fsetls()$acc, param2, dtrng2, sites2)
-    
-    anlzMWRsite(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, thresh = thresh, type = type2, dtrng = dtrng2, site = sites2, confint = confint2, bssize = 18) + 
+    req(all(sites2 %in% valid_sites2()))
+
+    anlzMWRsite(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, thresh = thresh, type = type2, dtrng = dtrng2, site = sites2, confint = confint2, bssize = 18, warn = FALSE) +
       ggplot2::labs(title = NULL)
-    
+
   })
-  
+
   output$map_plot <- renderPlot({
-    
+
     # inputs
     param2 <- input$param2
     dtrng2 <- as.character(input$dtrng2)
     sites2 <- input$sites2
     watsel <- input$watsel
     mapsel <- input$mapsel
-    
+
     req(fsetls()$res, fsetls()$acc, fsetls()$sit, param2, dtrng2, sites2)
+    req(all(sites2 %in% valid_sites2()))
     
     if(watsel == 'NULL')
       watsel <- NULL
     if(mapsel == 'NULL')
       mapsel <- NULL
     
-    anlzMWRmap(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, dtrng = dtrng2, site = sites2, addwater = watsel, maptype = mapsel, bssize = 18) + 
+    anlzMWRmap(res = fsetls()$res, param = param2, acc = fsetls()$acc, sit = fsetls()$sit, dtrng = dtrng2, site = sites2, addwater = watsel, maptype = mapsel, bssize = 18, warn = FALSE) + 
       ggplot2::labs(title = NULL)
     
   })

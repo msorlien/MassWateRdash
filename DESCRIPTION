@@ -47,17 +47,22 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports: 
+    bsicons,
     bslib,
     dplyr,
+    golem,
     lubridate,
     MassWateR,
     readxl,
+    rhandsontable,
     shiny,
     shinyWidgets,
     wqformat,
     writexl
 Suggests: 
+    spelling,
     testthat (>= 3.0.0)
 Remotes: 
     massbays-tech/wqformat
 Config/testthat/edition: 3
+Language: en-US

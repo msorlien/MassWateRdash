@@ -1,4 +1,4 @@
-﻿source('R/global.R')
+source('R/global.R')
 
 addResourcePath(
   prefix = "toimg", 
@@ -514,7 +514,7 @@ server <- function(input, output, session) {
   })
   
   # Modules ----
-  wqf <- mod_format_server("prep")
+  wqf <- mod_upload_format_server("prep")
 
   observeEvent(wqf$dat_results(), {
     req(wqf$dat_results())
@@ -531,7 +531,7 @@ server <- function(input, output, session) {
   observeEvent(input$show_format_modal, {
     showModal(modalDialog(
       title = "Convert from Another Format",
-      mod_format_ui("prep", in_modal = TRUE),
+      mod_upload_format_ui("prep", in_modal = TRUE),
       size = "xl",
       footer = modalButton("Close"),
       easyClose = TRUE

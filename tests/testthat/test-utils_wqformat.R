@@ -83,35 +83,35 @@ test_that("format_custom_results works", {
     "Result Comment" = c(NA, "River was very full", NA, NA),
     check.names = FALSE
   )
-  
+
   all_var <- list(
     col_name = c(
-      `Monitoring Location ID` = "Site_ID", 
-      `Activity Type` = "Activity_Type", 
-      `Activity Start Date` = "Date", 
-      `Activity Start Time` = "Time", 
-      `Activity Depth/Height Measure` = "Depth", 
+      `Monitoring Location ID` = "Site_ID",
+      `Activity Type` = "Activity_Type",
+      `Activity Start Date` = "Date",
+      `Activity Start Time` = "Time",
+      `Activity Depth/Height Measure` = "Depth",
       `Activity Depth/Height Unit` = "Depth_Unit",
-      `Characteristic Name` = "Parameter", 
-      `Result Value` = "Result", 
-      `Result Unit` = "Result_Unit", 
+      `Characteristic Name` = "Parameter",
+      `Result Value` = "Result",
+      `Result Unit` = "Result_Unit",
       `Quantitation Limit` = "Quantitation_Limit",
-      `QC Reference Value` = "QC_Reference_Value", 
-      `Result Measure Qualifier` = "Qualifier", 
-      `Result Attribute` = "Result_Attribute", 
+      `QC Reference Value` = "QC_Reference_Value",
+      `Result Measure Qualifier` = "Qualifier",
+      `Result Attribute` = "Result_Attribute",
       `Sample Collection Method ID` = "Method_ID",
-      `Project ID` = "Project_ID", 
+      `Project ID` = "Project_ID",
       `Result Comment` = "Comment"
     ),
     param = c(
-      `DO saturation` = "Dissolved oxygen saturation", 
+      `DO saturation` = "Dissolved oxygen saturation",
       TSS = "Total suspended solids",
       `Sp Conductance` = "Specific conductance"
     ),
     param_unit = c(`mg/l` = "mg/L"),
     qualifier = NULL,
     activity = c(
-      `Quality Control Sample-Lab Duplicate` = "Lab Duplicate", 
+      `Quality Control Sample-Lab Duplicate` = "Lab Duplicate",
       `Quality Control-Calibration Check` = "Calibration Check"
     )
   )

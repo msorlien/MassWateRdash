@@ -4,54 +4,51 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
 #'
-#' @importFrom shiny NS tagList 
+#' @importFrom shiny NS tagList
 mod_wqx_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    navset_card_underline(
+    bslib::navset_card_underline(
       full_screen = T,
-      nav_panel(
-        "Projects", 
-        reactable::reactableOutput('tabwqxprojects')
+      bslib::nav_panel(
+        "Projects",
+        reactable::reactableOutput("tabwqxprojects")
       ),
-      nav_panel(
+      bslib::nav_panel(
         "Locations",
-        reactable::reactableOutput('tabwqxlocations')
+        reactable::reactableOutput("tabwqxlocations")
       ),
-      nav_panel(
+      bslib::nav_panel(
         "Results",
-        reactable::reactableOutput('tabwqxresults')
+        reactable::reactableOutput("tabwqxresults")
       ),
-      nav_panel(
-        "Workbook", 
+      bslib::nav_panel(
+        "Workbook",
         uiOutput("dwnldwqxbutt")
       )
     )
   )
 }
-    
+
 #' wqx Server Functions
 #'
-#' @noRd 
-mod_wqx_server <- function(id){
-  moduleServer(id, function(input, output, session){
+#' @noRd
+mod_wqx_server <- function(id) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     # list output
     tabwqx <- reactive({
-      
       req(fsetls()$res, fsetls()$acc, fsetls()$sit, fsetls()$wqx)
-      
+
       tabMWRwqx(fset = fsetls(), listout = T, warn = F)
-      
     })
-    
+
     # projects table
     output$tabwqxprojects <- reactable::renderReactable({
-      
       req(tabwqx())
-      
+
       reactable::reactable(
         tabwqx()$Projects,
         defaultColDef = reactable::colDef(
@@ -59,14 +56,12 @@ mod_wqx_server <- function(id){
         ),
         filterable = T
       )
-      
     })
-    
+
     # locations table
     output$tabwqxlocations <- reactable::renderReactable({
-      
       req(tabwqx())
-      
+
       reactable::reactable(
         tabwqx()$Locations,
         defaultColDef = reactable::colDef(
@@ -74,14 +69,12 @@ mod_wqx_server <- function(id){
         ),
         filterable = T
       )
-      
     })
-    
+
     # results table
     output$tabwqxresults <- reactable::renderReactable({
-      
       req(tabwqx())
-      
+
       reactable::reactable(
         tabwqx()$Results,
         defaultColDef = reactable::colDef(
@@ -89,25 +82,26 @@ mod_wqx_server <- function(id){
         ),
         filterable = T
       )
-      
     })
-    
+
     # download wqx workbook
     output$dwnldwqx <- downloadHandler(
-      filename = function(){'wqxtab.xlsx'},
-      content = function(file){
-        
-        tabMWRwqx(fset = fsetls(), 
-                  output_dir = dirname(file), 
-                  output_file = basename(file))
-        
+      filename = function() {
+        "wqxtab.xlsx"
+      },
+      content = function(file) {
+        tabMWRwqx(
+          fset = fsetls(),
+          output_dir = dirname(file),
+          output_file = basename(file)
+        )
       }
     )
   })
 }
-    
+
 ## To be copied in the UI
 # mod_wqx_ui("wqx_1")
-    
+
 ## To be copied in the server
 # mod_wqx_server("wqx_1")

@@ -40,23 +40,23 @@ mod_visualize_ui <- function(id) {
         bslib::nav_panel(
           "Map",
           selectInput(
-            "watsel", 
-            "Water feature detail", 
+            "watsel",
+            "Water feature detail",
             choices = c("low", "medium", "high", "none" = "NULL")
           ),
           selectInput(
-            "mapsel", 
-            "Basemap selection", 
+            "mapsel",
+            "Basemap selection",
             choices = c(
-              "none" = "NULL", "OpenStreetMap", "OpenStreetMap.DE", 
-              "OpenStreetMap.France", "OpenStreetMap.HOT", "OpenTopoMap", 
-              "Esri.WorldStreetMap", "Esri.DeLorme", "Esri.WorldTopoMap", 
-              "Esri.WorldImagery", "Esri.WorldTerrain", 
-              "Esri.WorldShadedRelief", "Esri.OceanBasemap", 
-              "Esri.NatGeoWorldMap", "Esri.WorldGrayCanvas", "CartoDB.Positron", 
-              "CartoDB.PositronNoLabels", "CartoDB.PositronOnlyLabels", 
-              "CartoDB.DarkMatter", "CartoDB.DarkMatterNoLabels", 
-              "CartoDB.DarkMatterOnlyLabels", "CartoDB.Voyager", 
+              "none" = "NULL", "OpenStreetMap", "OpenStreetMap.DE",
+              "OpenStreetMap.France", "OpenStreetMap.HOT", "OpenTopoMap",
+              "Esri.WorldStreetMap", "Esri.DeLorme", "Esri.WorldTopoMap",
+              "Esri.WorldImagery", "Esri.WorldTerrain",
+              "Esri.WorldShadedRelief", "Esri.OceanBasemap",
+              "Esri.NatGeoWorldMap", "Esri.WorldGrayCanvas", "CartoDB.Positron",
+              "CartoDB.PositronNoLabels", "CartoDB.PositronOnlyLabels",
+              "CartoDB.DarkMatter", "CartoDB.DarkMatterNoLabels",
+              "CartoDB.DarkMatterOnlyLabels", "CartoDB.Voyager",
               "CartoDB.VoyagerNoLabels", "CartoDB.VoyagerOnlyLabels"
             )
           ),

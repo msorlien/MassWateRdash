@@ -44,7 +44,6 @@ Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports: 
     bsicons,
     bslib,
@@ -53,6 +52,7 @@ Imports:
     flextable,
     ggplot2,
     golem,
+    here,
     htmltools,
     lubridate,
     MassWateR,
@@ -73,3 +73,6 @@ Remotes:
     massbays-tech/wqformat
 Config/testthat/edition: 3
 Language: en-US
+Config/roxygen2/version: 8.0.0
+Depends: 
+    R (>= 3.5)

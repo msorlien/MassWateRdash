@@ -64,11 +64,11 @@ mod_outlier_server <- function(id) {
 
       anlzMWRoutlier(
         res = fsetls()$res,
-        param = param1, 
-        acc = fsetls()$acc, 
-        group = group1, 
-        type = type1, 
-        dtrng = dtrng1, 
+        param = param1,
+        acc = fsetls()$acc,
+        group = group1,
+        type = type1,
+        dtrng = dtrng1,
         bssize = 18
       ) +
         ggplot2::labs(title = NULL)
@@ -84,11 +84,11 @@ mod_outlier_server <- function(id) {
       req(fsetls()$res, fsetls()$acc, param1, dtrng1)
 
       tab <- anlzMWRoutlier(
-        res = fsetls()$res, 
-        param = param1, 
-        acc = fsetls()$acc, 
-        group = group1, 
-        dtrng = dtrng1, 
+        res = fsetls()$res,
+        param = param1,
+        acc = fsetls()$acc,
+        group = group1,
+        dtrng = dtrng1,
         outliers = T
       )
 
@@ -117,9 +117,9 @@ mod_outlier_server <- function(id) {
 
         anlzMWRoutlierall(
           fset = fsetls(),
-          group = group1, 
-          type = type1, 
-          dtrng = dtrng1, 
+          group = group1,
+          type = type1,
+          dtrng = dtrng1,
           format = "word",
           output_dir = dirname(file),
           output_file = basename(file)
@@ -140,9 +140,9 @@ mod_outlier_server <- function(id) {
 
         anlzMWRoutlierall(
           fset = fsetls(),
-          group = group1, 
-          type = type1, 
-          dtrng = dtrng1, 
+          group = group1,
+          type = type1,
+          dtrng = dtrng1,
           format = "zip",
           output_dir = dirname(file),
           output_file = basename(file)

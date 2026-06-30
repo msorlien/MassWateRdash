@@ -139,13 +139,15 @@ mod_upload_server <- function(id) {
       bindEvent(wqf$dat_sites())
 
     observe({
-      showModal(modalDialog(
-        title = "Convert from Another Format",
-        mod_upload_format_ui("prep", in_modal = TRUE),
-        size = "xl",
-        footer = modalButton("Close"),
-        easyClose = TRUE
-      ))
+      showModal(
+        modalDialog(
+          title = "Convert from Another Format",
+          mod_upload_format_ui("prep", in_modal = TRUE),
+          size = "xl",
+          footer = modalButton("Close"),
+          easyClose = TRUE
+        )
+      )
     }) |>
       bindEvent(input$show_format_modal)
 
@@ -386,7 +388,7 @@ mod_upload_server <- function(id) {
               hot <- hot |>
                 rhandsontable::hot_col(
                   idx,
-                  renderer = 
+                  renderer =
                     "function(instance, td, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.TextRenderer.apply(this, arguments);
                     td.style.background = '#f8d7da';

@@ -6,7 +6,7 @@
 #'
 #' @param id Namespace id for module. Should match `mod_upload_repair_server()`
 #' id.
-#' @param dat_label String. Dataset name. Used to label "Edit" button.
+#' @param dat_label String. Full dataset name.
 #'
 #' @noRd
 mod_upload_repair_ui <- function(id, dat_label) {
@@ -32,7 +32,9 @@ mod_upload_repair_ui <- function(id, dat_label) {
 #' interactive process.
 #'
 #' @param id Namespace id for module. Should match `mod_upload_repair_ui()` id.
-#' @param raw_dat Dataframe.
+#' @param raw_dat Dataframe. Raw data.
+#' @param bad_dat Dataframe. Censored data.
+#' @param dat_name String. Short dataframe name.
 #' @param is_visible Boolean. If `TRUE`, show `ns("open_editor")`.
 #' @param val_log String. Validation log.
 #'
@@ -40,6 +42,8 @@ mod_upload_repair_ui <- function(id, dat_label) {
 mod_upload_repair_server <- function(
   id,
   raw_dat,
+  dat_label,
+  dat_name,
   is_visible,
   val_log
 ) {
@@ -52,10 +56,56 @@ mod_upload_repair_server <- function(
     })
     outputOptions(output, "show_btn", suspendWhenHidden = FALSE)
 
+    # Set reactive values ----
+    val <- reactiveValues(
+      error_log <- "",
+      dat <- NULL,
+      bad_dat <- NULL
+    )
+
+    # Update reactive values when "Edit" button selected
+    observe({
+      val$error_log <- val_log()
+      val$dat <- raw_dat()
+      val$bad_dat <- NULL
+    }) |>
+      bindEvent(input$open_editor)
+
+    # Create modal ----
     observe({
       showModal(
-        build_modal(
-          is_column_error(val_log())
+        modalDialog(
+          title = paste("Edit", dat_label, "- Fix Validation Errors"),
+          size = "xl",
+          easyClose = FALSE,
+          uiOutput(ns("modal_msgs")),
+          br(),
+          p("Fix the issue below, then click 'Try upload again'."),
+          if (is_column_error(val$error_log)) {
+            bslib::card(
+              bslib::card_header("Column Names"),
+              rhandsontable::rHandsontableOutput(ns("hot_headers"))
+            )
+          } else {
+            bslib::card(
+              bslib::card_header(
+                div(
+                  class = "d-flex justify-content-between align-items-center w-100",
+                  "Data",
+                  uiOutput(ns("row_filter_ui"))
+                )
+              ),
+              rhandsontable::rHandsontableOutput(ns("hot"))
+            )
+          },
+          footer = tagList(
+            actionButton(
+              ns("retry"),
+              "Try upload again",
+              class = "btn-primary"
+            ),
+            modalButton("Close")
+          )
         )
       )
     }) |>
@@ -63,7 +113,7 @@ mod_upload_repair_server <- function(
 
     # Validation message shown inside the modal
     output$modal_msgs <- renderUI({
-      msg <- val_log()
+      msg <- val$error_log
       if (nchar(trimws(msg)) == 0) {
         return(NULL)
       }
@@ -76,10 +126,10 @@ mod_upload_repair_server <- function(
 
     # Column names editor (renders even when modal is closed so it's ready on open)
     output$hot_headers <- rhandsontable::renderRHandsontable({
-      req(raw_dat())
+      req(val$dat)
 
-      col_names <- names(raw_dat())
-      locs <- parse_error_locations(val_log())
+      col_names <- names(val$dat)
+      locs <- parse_error_locations(val$error_log)
       header_df <- setNames(
         as.data.frame(as.list(col_names), stringsAsFactors = FALSE),
         as.character(seq_along(col_names))
@@ -108,23 +158,15 @@ mod_upload_repair_server <- function(
       }
       hot
     })
-    outputOptions(
-      output,
-      "hot_headers",
-      suspendWhenHidden = FALSE
-    )
+    outputOptions(output, "hot_headers", suspendWhenHidden = FALSE)
 
     # Row filter toggle - shown in the Data card header when problem rows exist
     output$row_filter_ui <- renderUI({
-      problem_rows <- parse_problem_rows(val_log())
+      problem_rows <- parse_problem_rows(val$error_log)
       if (length(problem_rows) == 0) {
         return(NULL)
       }
-      n_total <- if (!is.null(raw_dat())) {
-        nrow(raw_dat())
-      } else {
-        0
-      }
+      n_total <- if (!is.null(val$dat)) nrow(val$dat) else 0
 
       div(
         class = "d-flex align-items-center gap-2",
@@ -133,7 +175,7 @@ mod_upload_repair_server <- function(
           paste(length(problem_rows), "row(s) with issues")
         ),
         checkboxInput(
-          "show_all_rows",
+          ns("show_all_rows"),
           paste0("show all ", n_total, " rows"),
           value = FALSE
         )
@@ -143,10 +185,10 @@ mod_upload_repair_server <- function(
 
     # Data editor - shows only problem rows by default when they exist
     output$hot <- rhandsontable::renderRHandsontable({
-      req(raw_dat())
-      dat <- raw_dat()
-      problem_rows <- parse_problem_rows(val_log())
-      locs <- parse_error_locations(val_log(), names(dat))
+      req(val$dat)
+      dat <- val$dat
+      problem_rows <- parse_problem_rows(val$error_log)
+      locs <- parse_error_locations(val$error_log, names(dat))
       show_all <- isTRUE(input$show_all_rows)
       if (length(problem_rows) > 0 && !show_all) {
         valid_rows <- problem_rows[
@@ -154,12 +196,14 @@ mod_upload_repair_server <- function(
         ]
         dat <- dat[valid_rows, , drop = FALSE]
       }
+
       hot <- rhandsontable::rhandsontable(
         dat,
         width = "100%",
         height = 450
       ) |>
         rhandsontable::hot_table(wordWrap = FALSE)
+
       col_names <- names(dat)
       if (length(problem_rows) > 0 || length(locs$cell_map) > 0) {
         for (i in seq_along(col_names)) {
@@ -199,23 +243,19 @@ mod_upload_repair_server <- function(
       }
       hot
     })
-    outputOptions(output, paste0(nm, "_hot"), suspendWhenHidden = FALSE)
+    outputOptions(output, "hot", suspendWhenHidden = FALSE)
 
     observe({
-      col_err <- is_column_error(val_log())
+      col_err <- is_column_error(val$error_log)
       handle_retry(
-        nm,
+        dat_name,
         hot_input = if (!col_err) input$hot else NULL,
-        hot_headers_input = if (col_err) {
-          input$hot_headers
-        } else {
-          NULL
-        },
+        hot_headers_input = if (col_err) input$hot_headers else NULL,
         show_all = isTRUE(input$show_all_rows),
-        problem_rows = parse_problem_rows(val_log())
+        problem_rows = parse_problem_rows(val$error_log)
       )
       if (is_visible) {
-        new_col_err <- is_column_error(val_log())
+        new_col_err <- is_column_error(val$error_log)
         if (new_col_err != col_err) {
           removeModal()
           showModal(build_modal(new_col_err))
@@ -223,5 +263,20 @@ mod_upload_repair_server <- function(
       }
     }) |>
       bindEvent(input$retry)
+
+    # Return data ----
+    return(
+      list(
+        val_log = reactive({
+          val$error_log
+        }),
+        dat_raw = reactive({
+          val$dat
+        }),
+        dat_removed = reactive({
+          val$bad_dat
+        })
+      )
+    )
   })
 }

@@ -1,3 +1,14 @@
+#' Check for column errors
+#'
+#' @description `is_column_error()` checks if the validation message contains
+#' any warnings for missing or misnamed columns.
+#'
+#' @param msg String. Validation message.
+#'
+#' @return Boolean. If any column name warning(s) detected, returns `TRUE`,
+#' else returns `FALSE`.
+#'
+#' @noRd
 is_column_error <- function(msg) {
   if (is.null(msg) || nchar(trimws(msg)) == 0) {
     return(FALSE)
@@ -5,7 +16,16 @@ is_column_error <- function(msg) {
   grepl("correct the column names|Missing the following columns", msg)
 }
 
-# Parse row indices from a validation message (e.g. "in row(s) 3, 7, 45")
+#' Parse problem rows
+#'
+#' @description `parse_problem_rows()` parses the listed row indices from a
+#' validation message.
+#'
+#' @param msg String. Validation message.
+#'
+#' @return List or integer containing row numbers.
+#'
+#' @noRd
 parse_problem_rows <- function(msg) {
   if (is.null(msg) || nchar(trimws(msg)) == 0) {
     return(integer(0))
@@ -99,18 +119,20 @@ parse_error_locations <- function(msg, col_names = NULL) {
 # problem_rows: indices that were displayed in filtered view
 handle_retry <- function(
   data_name,
+  raw_dat_state,
+  is_visible,
   hot_input,
   hot_headers_input = NULL,
   show_all = TRUE,
   problem_rows = integer(0)
 ) {
-  validation_log("")
+  validation_log <- ""
 
   if (!is.null(hot_input)) {
     edited_df <- rhandsontable::hot_to_r(hot_input)
   } else {
-    req(raw_data_states[[data_name]])
-    edited_df <- raw_data_states[[data_name]]
+    req(raw_dat_state)
+    edited_df <- raw_dat_state
   }
 
   # Apply any edited column names from the header editor
@@ -125,12 +147,8 @@ handle_retry <- function(
   }
 
   # When filtered view was active, merge the edited subset back into the full data
-  if (
-    !show_all &&
-      length(problem_rows) > 0 &&
-      !is.null(raw_data_states[[data_name]])
-  ) {
-    full_df <- raw_data_states[[data_name]]
+  if (!show_all && length(problem_rows) > 0 && !is.null(raw_dat_state)) {
+    full_df <- raw_dat_state
     names(full_df) <- names(edited_df)
     valid_rows <- problem_rows[
       problem_rows >= 1 & problem_rows <= nrow(full_df)
@@ -141,22 +159,32 @@ handle_retry <- function(
 
   # Persist edits into raw_data_states so they survive a failed retry and the
   # re-rendered table reflects the user's work on the next round of checks
-  raw_data_states[[data_name]] <<- edited_df
+  raw_dat_state <- edited_df
 
   result <- tryCatch(
     {
       capture_messages(retry_fns[[data_name]](edited_df))
     },
     error = function(e) {
-      validation_log(paste0("Error in ", data_name, ": ", e$message))
+      validation_log <- paste0("Error in ", data_name, ": ", e$message)
       NULL
     }
   )
 
-  data_states[[data_name]] <- result
+  dat_state <- result
+
   if (!is.null(result)) {
-    edit_visible[[data_name]] <- FALSE
-    raw_data_states[[data_name]] <<- NULL
+    is_visible <- FALSE
+    raw_dat_state <- NULL
     removeModal()
   }
+
+  return(
+    list(
+      validation_log = validation_log,
+      raw_dat_state = raw_dat_state,
+      dat_state = dat_state,
+      is_visible = is_visible
+    )
+  )
 }

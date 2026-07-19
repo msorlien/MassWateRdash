@@ -32,41 +32,50 @@ mod_upload_repair_ui <- function(id, dat_label) {
 #' interactive process.
 #'
 #' @param id Namespace id for module. Should match `mod_upload_repair_ui()` id.
-#' @param raw_dat Dataframe. Raw data.
+#' @param raw_dat_state Dataframe. Raw data.
 #' @param bad_dat Dataframe. Censored data.
 #' @param dat_name String. Short dataframe name.
 #' @param is_visible Boolean. If `TRUE`, show `ns("open_editor")`.
-#' @param val_log String. Validation log.
+#' @param validation_log String. Validation log.
 #'
 #' @noRd
 mod_upload_repair_server <- function(
   id,
-  raw_dat,
+  raw_dat_state, # raw_data_states[[dat_name]]
+  dat_state, # dat_states[[dat_name]]
   dat_label,
   dat_name,
   is_visible,
-  val_log
+  validation_log
 ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    # Set reactive values ----
+    val <- reactiveValues(
+      validation_log <- "",
+      raw_dat_state <- NULL,
+      dat_state <- NULL,
+      bad_dat <- NULL,
+      is_visible <- FALSE
+    )
+
+    observe({
+      val$is_visible <- is_visible()
+    }) |>
+      bindEvent(is_visible())
+
     # Toggle edit button visibility
     output$show_btn <- renderText({
-      paste(is_visible())
+      paste(val$is_visible)
     })
     outputOptions(output, "show_btn", suspendWhenHidden = FALSE)
 
-    # Set reactive values ----
-    val <- reactiveValues(
-      error_log <- "",
-      dat <- NULL,
-      bad_dat <- NULL
-    )
-
     # Update reactive values when "Edit" button selected
     observe({
-      val$error_log <- val_log()
-      val$dat <- raw_dat()
+      val$validation_log <- validation_log()
+      val$raw_dat_state <- raw_dat_state()
+      val$dat_state <- dat_state()
       val$bad_dat <- NULL
     }) |>
       bindEvent(input$open_editor)
@@ -81,7 +90,7 @@ mod_upload_repair_server <- function(
           uiOutput(ns("modal_msgs")),
           br(),
           p("Fix the issue below, then click 'Try upload again'."),
-          if (is_column_error(val$error_log)) {
+          if (is_column_error(val$validation_log)) {
             bslib::card(
               bslib::card_header("Column Names"),
               rhandsontable::rHandsontableOutput(ns("hot_headers"))
@@ -113,7 +122,7 @@ mod_upload_repair_server <- function(
 
     # Validation message shown inside the modal
     output$modal_msgs <- renderUI({
-      msg <- val$error_log
+      msg <- val$validation_log
       if (nchar(trimws(msg)) == 0) {
         return(NULL)
       }
@@ -126,10 +135,10 @@ mod_upload_repair_server <- function(
 
     # Column names editor (renders even when modal is closed so it's ready on open)
     output$hot_headers <- rhandsontable::renderRHandsontable({
-      req(val$dat)
+      req(val$raw_dat_state)
 
-      col_names <- names(val$dat)
-      locs <- parse_error_locations(val$error_log)
+      col_names <- names(val$raw_dat_state)
+      locs <- parse_error_locations(val$validation_log)
       header_df <- setNames(
         as.data.frame(as.list(col_names), stringsAsFactors = FALSE),
         as.character(seq_along(col_names))
@@ -162,11 +171,11 @@ mod_upload_repair_server <- function(
 
     # Row filter toggle - shown in the Data card header when problem rows exist
     output$row_filter_ui <- renderUI({
-      problem_rows <- parse_problem_rows(val$error_log)
+      problem_rows <- parse_problem_rows(val$validation_log)
       if (length(problem_rows) == 0) {
         return(NULL)
       }
-      n_total <- if (!is.null(val$dat)) nrow(val$dat) else 0
+      n_total <- if (!is.null(val$raw_dat_state)) nrow(val$raw_dat_state) else 0
 
       div(
         class = "d-flex align-items-center gap-2",
@@ -185,10 +194,10 @@ mod_upload_repair_server <- function(
 
     # Data editor - shows only problem rows by default when they exist
     output$hot <- rhandsontable::renderRHandsontable({
-      req(val$dat)
-      dat <- val$dat
-      problem_rows <- parse_problem_rows(val$error_log)
-      locs <- parse_error_locations(val$error_log, names(dat))
+      req(val$raw_dat_state)
+      dat <- val$raw_dat_state
+      problem_rows <- parse_problem_rows(val$validation_log)
+      locs <- parse_error_locations(val$validation_log, names(dat))
       show_all <- isTRUE(input$show_all_rows)
       if (length(problem_rows) > 0 && !show_all) {
         valid_rows <- problem_rows[
@@ -197,11 +206,7 @@ mod_upload_repair_server <- function(
         dat <- dat[valid_rows, , drop = FALSE]
       }
 
-      hot <- rhandsontable::rhandsontable(
-        dat,
-        width = "100%",
-        height = 450
-      ) |>
+      hot <- rhandsontable::rhandsontable(dat, width = "100%", height = 450) |>
         rhandsontable::hot_table(wordWrap = FALSE)
 
       col_names <- names(dat)
@@ -245,33 +250,39 @@ mod_upload_repair_server <- function(
     })
     outputOptions(output, "hot", suspendWhenHidden = FALSE)
 
+    # Retry ----
     observe({
-      col_err <- is_column_error(val$error_log)
-      handle_retry(
+      col_err <- is_column_error(val$validation_log)
+      new_dat <- handle_retry(
         dat_name,
+        raw_dat_state = raw_dat_state,
+        is_visible = val$is_visible,
         hot_input = if (!col_err) input$hot else NULL,
         hot_headers_input = if (col_err) input$hot_headers else NULL,
         show_all = isTRUE(input$show_all_rows),
-        problem_rows = parse_problem_rows(val$error_log)
+        problem_rows = parse_problem_rows(val$validation_log)
       )
-      if (is_visible) {
-        new_col_err <- is_column_error(val$error_log)
-        if (new_col_err != col_err) {
-          removeModal()
-          showModal(build_modal(new_col_err))
-        }
-      }
+
+      val$validation_log <- new_dat$validation_log
+      val$raw_dat_state <- new_dat$raw_dat_state
+      val$dat_state <- new_dat$dat_state
+      val$is_visible <- new_dat$is_visible
+
+      if (!val$is_visible) removeModal()
     }) |>
       bindEvent(input$retry)
 
     # Return data ----
     return(
       list(
-        val_log = reactive({
-          val$error_log
+        validation_log = reactive({
+          val$validation_log
         }),
-        dat_raw = reactive({
-          val$dat
+        raw_dat_state = reactive({
+          val$raw_dat_state
+        }),
+        dat_state <- reactive({
+          new_dat$dat_state
         }),
         dat_removed = reactive({
           val$bad_dat

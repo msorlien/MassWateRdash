@@ -91,66 +91,100 @@ mod_qc_ui <- function(id) {
 #' qc Server Functions
 #'
 #' @noRd
-mod_qc_server <- function(id) {
+mod_qc_server <- function(id, fsetls) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
     # dqo table frecomdat
     output$frecomdat_table <- renderUI({
-      req(fsetls()$frecom)
+      req(fsetls$frecom())
 
-      frecomdat_tab(fsetls()$frecom, dqofontsize, padding, wd)
+      frecomdat_tab(fsetls$frecom(), dqofontsize, padding, wd)
     })
 
     # dqo table accdat
     output$accdat_table <- renderUI({
-      req(fsetls()$acc)
+      req(fsetls$acc())
 
-      accdat_tab(fsetls()$acc, dqofontsize, padding, wd)
+      accdat_tab(fsetls$acc(), dqofontsize, padding, wd)
     })
 
     # frequency table percent
     output$tabfreper <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRfre(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "percent", warn = F) |>
+      tabMWRfre(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "percent",
+        warn = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # frequency summary table
     output$tabfresum <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRfre(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "summary", warn = F) |>
+      tabMWRfre(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "summary",
+        warn = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # accuracy table percent
     output$tabaccper <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRacc(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "percent", warn = F) |>
+      tabMWRacc(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "percent",
+        warn = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # accuracy table summary
     output$tabaccsum <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRacc(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "summary", warn = F) |>
+      tabMWRacc(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "summary",
+        warn = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # completeness table
     output$tabcom <- renderUI({
-      req(fsetls()$res, fsetls()$frecom)
+      req(fsetls$res(), fsetls$frecom())
 
-      out <- tabMWRcom(res = fsetls()$res, frecom = fsetls()$frecom, cens = fsetls()$cens, warn = F, parameterwd = 1.15)
+      out <- tabMWRcom(
+        res = fsetls$res(),
+        frecom = fsetls$frecom(),
+        cens = fsetls$cens(),
+        warn = F,
+        parameterwd = 1.15
+      )
       out <- out |>
-        flextable::width(width = (wd - 3.15) / (flextable::ncol_keys(out) - 2), j = 2:(flextable::ncol_keys(out) - 1)) |>
+        flextable::width(
+          width = (wd - 3.15) / (flextable::ncol_keys(out) - 2),
+          j = 2:(flextable::ncol_keys(out) - 1)
+        ) |>
         flextable::htmltools_value()
 
       return(out)
@@ -158,45 +192,85 @@ mod_qc_server <- function(id) {
 
     # individual field duplicates
     output$indflddup <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRacc(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "individual", accchk = "Field Duplicates", warn = F, caption = F) |>
+      tabMWRacc(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "individual",
+        accchk = "Field Duplicates",
+        warn = F,
+        caption = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # individual lab duplicates
     output$indlabdup <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRacc(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "individual", accchk = "Lab Duplicates", warn = F, caption = F) |>
+      tabMWRacc(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "individual",
+        accchk = "Lab Duplicates",
+        warn = F,
+        caption = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # individual field blanks
     output$indfldblk <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRacc(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "individual", accchk = "Field Blanks", warn = F, caption = F) |>
+      tabMWRacc(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "individual",
+        accchk = "Field Blanks",
+        warn = F,
+        caption = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # individual lab blanks
     output$indlabblk <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRacc(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "individual", accchk = "Lab Blanks", warn = F, caption = F) |>
+      tabMWRacc(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "individual",
+        accchk = "Lab Blanks",
+        warn = F,
+        caption = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
 
     # individual lab spikes/instrument checks
     output$indlabins <- renderUI({
-      req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
+      req(fsetls$res(), fsetls$acc(), fsetls$frecom())
 
-      tabMWRacc(res = fsetls()$res, acc = fsetls()$acc, frecom = fsetls()$frecom, type = "individual", accchk = "Lab Spikes / Instrument Checks", warn = F, caption = F) |>
+      tabMWRacc(
+        res = fsetls$res(),
+        acc = fsetls$acc(),
+        frecom = fsetls$frecom(),
+        type = "individual",
+        accchk = "Lab Spikes / Instrument Checks",
+        warn = F,
+        caption = F
+      ) |>
         thmsum(wd = wd) |>
         flextable::htmltools_value()
     })
@@ -217,8 +291,3 @@ mod_qc_server <- function(id) {
   })
 }
 
-## To be copied in the UI
-# mod_qc_ui("qc_1")
-
-## To be copied in the server
-# mod_qc_server("qc_1")

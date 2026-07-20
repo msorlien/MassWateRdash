@@ -60,6 +60,7 @@
 #' @importFrom shiny tabPanelBody
 #' @importFrom shiny tabsetPanel
 #' @importFrom shiny tagList
+#' @importFrom shiny testServer
 #' @importFrom shiny uiOutput
 #' @importFrom shiny updateSelectInput
 #' @importFrom shiny updateSliderInput

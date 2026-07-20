@@ -80,96 +80,18 @@ ui <- page_navbar(
     )
   ),
 
-  # Upload & Validate----
+  # Tabs ----
   nav_panel(
     "1 Upload & Validate",
     mod_upload_ui("upload")
   ),
-
-  # Outlier assessment -----
   nav_panel(
     "2 Outlier assessment",
     mod_outlier_ui("outlier")
   ),
-
-  # QC reporting -----
   nav_panel(
     "3 QC reporting",
-    navset_card_underline(
-      full_screen = T,
-      nav_panel(
-        "DQO tables",
-        navset_pill(
-          nav_panel(
-            "Frequency & Completeness",
-            uiOutput("frecomdat_table")
-          ),
-          nav_panel(
-            "Accuracy",
-            uiOutput("accdat_table")
-          )
-        )
-      ),
-      nav_panel(
-        "Accuracy",
-        navset_pill(
-          nav_panel(
-            "Percent",
-            uiOutput("tabaccper")
-          ),
-          nav_panel(
-            "Summary",
-            uiOutput("tabaccsum")
-          )
-        )
-      ),
-      nav_panel(
-        "Frequency",
-        navset_pill(
-          nav_panel(
-            "Percent",
-            uiOutput("tabfreper")
-          ),
-          nav_panel(
-            "Summary",
-            uiOutput("tabfresum")
-          )
-        )
-      ),
-      nav_panel(
-        "Completeness",
-        uiOutput("tabcom")
-      ),
-      nav_panel(
-        "Raw Data",
-        navset_pill(
-          nav_panel(
-            "Field Duplicates",
-            uiOutput("indflddup")
-          ),
-          nav_panel(
-            "Lab Duplicates",
-            uiOutput("indlabdup")
-          ),
-          nav_panel(
-            "Field Blanks",
-            uiOutput("indfldblk")
-          ),
-          nav_panel(
-            "Lab Blanks",
-            uiOutput("indlabblk")
-          ),
-          nav_panel(
-            "Lab Spikes / Instrument Checks",
-            uiOutput("indlabins")
-          )
-        )
-      ),
-      nav_panel(
-        "Report",
-        uiOutput("dwnldqcbutt")
-      )
-    )
+    mod_qc_ui("qc")
   ),
 
   # WQX output -----
@@ -287,6 +209,7 @@ server <- function(input, output, session) {
   # Modules ----
   fsetls <- mod_upload_server("upload")
   mod_outlier_server("outlier", fsetls)
+  mod_qc_server("qc", fsetls)
 
   # reactive UI -----
 
@@ -438,202 +361,6 @@ server <- function(input, output, session) {
 
     dl_btn('dwnldwqx', 'Download WQX workbook')
   })
-
-  # QC reporting -----
-
-  # dqo table frecomdat
-  output$frecomdat_table <- renderUI({
-    req(fsetls()$frecom)
-
-    frecomdat_tab(fsetls()$frecom, dqofontsize, padding, wd)
-  })
-
-  # dqo table accdat
-  output$accdat_table <- renderUI({
-    req(fsetls()$acc)
-
-    accdat_tab(fsetls()$acc, dqofontsize, padding, wd)
-  })
-
-  # frequency table percent
-  output$tabfreper <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRfre(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'percent',
-      warn = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # frequency summary table
-  output$tabfresum <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRfre(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'summary',
-      warn = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # accuracy table percent
-  output$tabaccper <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRacc(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'percent',
-      warn = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # accuracy table summary
-  output$tabaccsum <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRacc(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'summary',
-      warn = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # completeness table
-  output$tabcom <- renderUI({
-    req(fsetls()$res, fsetls()$frecom)
-
-    out <- tabMWRcom(
-      res = fsetls()$res,
-      frecom = fsetls()$frecom,
-      cens = fsetls()$cens,
-      warn = F,
-      parameterwd = 1.15
-    )
-    out <- out |>
-      flextable::width(
-        width = (wd - 3.15) / (flextable::ncol_keys(out) - 2),
-        j = 2:(flextable::ncol_keys(out) - 1)
-      ) |>
-      flextable::htmltools_value()
-
-    return(out)
-  })
-
-  # individual field duplicates
-  output$indflddup <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRacc(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'individual',
-      accchk = 'Field Duplicates',
-      warn = F,
-      caption = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # individual lab duplicates
-  output$indlabdup <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRacc(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'individual',
-      accchk = 'Lab Duplicates',
-      warn = F,
-      caption = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # individual field blanks
-  output$indfldblk <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRacc(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'individual',
-      accchk = 'Field Blanks',
-      warn = F,
-      caption = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # individual lab blanks
-  output$indlabblk <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRacc(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'individual',
-      accchk = 'Lab Blanks',
-      warn = F,
-      caption = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # individual lab spikes/instrument checks
-  output$indlabins <- renderUI({
-    req(fsetls()$res, fsetls()$acc, fsetls()$frecom)
-
-    tabMWRacc(
-      res = fsetls()$res,
-      acc = fsetls()$acc,
-      frecom = fsetls()$frecom,
-      type = 'individual',
-      accchk = 'Lab Spikes / Instrument Checks',
-      warn = F,
-      caption = F
-    ) |>
-      thmsum(wd = wd) |>
-      flextable::htmltools_value()
-  })
-
-  # download qc report word
-  output$dwnldqc <- downloadHandler(
-    filename = function() {
-      'qcreport.docx'
-    },
-    content = function(file) {
-      qcMWRreview(
-        fset = fsetls(),
-        output_dir = dirname(file),
-        output_file = basename(file)
-      )
-    }
-  )
 
   # WQX -----
 

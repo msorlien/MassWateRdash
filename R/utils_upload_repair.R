@@ -120,7 +120,7 @@ parse_error_locations <- function(msg, col_names = NULL) {
 handle_retry <- function(
   data_name,
   raw_dat_state,
-  is_visible,
+  edit_visible,
   hot_input,
   hot_headers_input = NULL,
   show_all = TRUE,
@@ -174,7 +174,7 @@ handle_retry <- function(
   dat_state <- result
 
   if (!is.null(result)) {
-    is_visible <- FALSE
+    edit_visible <- FALSE
     raw_dat_state <- NULL
   }
 
@@ -183,7 +183,7 @@ handle_retry <- function(
       validation_log = validation_log,
       raw_dat_state = raw_dat_state,
       dat_state = dat_state,
-      is_visible = is_visible
+      edit_visible = edit_visible
     )
   )
 }

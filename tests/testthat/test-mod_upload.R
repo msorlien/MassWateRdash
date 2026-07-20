@@ -1,4 +1,4 @@
-testServer(
+shiny::testServer(
   mod_upload_server,
   # Add here your module params
   args = list()

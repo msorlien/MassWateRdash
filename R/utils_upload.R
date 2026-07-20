@@ -8,20 +8,13 @@ capture_messages <- function(expr) {
     close(temp)
   })
 
-  result <- expr
-
   # Get the captured messages
-  if (exists("messages")) {
-    current_log <- validation_log()
-    new_msgs <- paste(messages, collapse = "\n")
-    validation_log(paste0(
-      current_log,
-      if (nchar(current_log) > 0) "\n",
-      new_msgs
-    ))
-  }
+  new_msgs <- if (exists("messages")) paste(messages, collapse = "\n") else ""
 
-  return(result)
+  list(
+    result = expr,
+    msgs = new_msgs
+  )
 }
 
 detect_wrong_file <- function(raw_df, data_name) {
@@ -111,11 +104,10 @@ retry_fns <- list(
 # file upload for observers
 fl_upload <- function(file, read_function, data_name) {
   req(file)
-  validation_log("")
-  for (nm in names(reactiveValuesToList(edit_visible))) {
-    edit_visible[[nm]] <- FALSE
-  }
-  raw_data_states[[data_name]] <- NULL
+
+  val_log <- ""
+  raw_dat_state <- NULL
+  edit_visible <- FALSE
 
   result <- tryCatch(
     {
@@ -128,40 +120,62 @@ fl_upload <- function(file, read_function, data_name) {
       )
       wrong_file_msg <- detect_wrong_file(raw, data_name)
       if (!is.null(wrong_file_msg)) {
-        validation_log(wrong_file_msg)
+        val_log <- wrong_file_msg
       } else {
-        validation_log(paste0("Error in ", data_name, ": ", e$message))
-        raw_data_states[[data_name]] <<- raw
-        edit_visible[[data_name]] <<- !is.null(raw)
+        val_log <- paste0("Error in ", data_name, ": ", e$message)
+        raw_dat_state <- raw
+        edit_visible <- !is.null(raw)
       }
       NULL
     }
   )
 
-  data_states[[data_name]] <- result
+  if (!is.null(result)) {
+    val_log <- result$msgs
+    dat_state <- result$result
+  } else {
+    dat_state <- NULL
+  }
+
+  return(
+    val_log = val_log,
+    raw_dat_state = raw_dat_state,
+    dat_state = dat_state,
+    edit_visible = if (!edit_visible) "" else data_name
+  )
 }
 
 # upload handler for data already converted in memory (e.g. from Format tab)
 from_format_upload <- function(df, retry_fn, data_name) {
-  validation_log("")
-  for (nm in names(reactiveValuesToList(edit_visible))) {
-    edit_visible[[nm]] <- FALSE
-  }
-  raw_data_states[[data_name]] <- NULL
+  val_log <- ""
+  raw_dat_state <- NULL
+  edit_visible <- FALSE
 
   result <- tryCatch(
     {
       capture_messages(retry_fn(df))
     },
     error = function(e) {
-      validation_log(paste0("Error processing ", data_name, ": ", e$message))
-      raw_data_states[[data_name]] <<- df
-      edit_visible[[data_name]] <<- TRUE
+      val_log <- paste0("Error processing ", data_name, ": ", e$message)
+      raw_dat_state <- df
+      edit_visible <- TRUE
       NULL
     }
   )
 
-  data_states[[data_name]] <- result
+  if (!is.null(result)) {
+    val_log <- result$msgs
+    dat_state <- result$result
+  } else {
+    dat_state <- NULL
+  }
+
+  return(
+    val_log = val_log,
+    raw_dat_state = raw_dat_state,
+    dat_state = dat_state,
+    edit_visible = if (!edit_visible) "" else data_name
+  )
 }
 
 #' File status

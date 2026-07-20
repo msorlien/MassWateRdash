@@ -114,36 +114,39 @@ mod_upload_server <- function(id) {
     ns <- session$ns
 
     # Reactive values -----
-    val_log <- reactiveVal("")
+    val <- reactiveValues(
+      validation_log = "",
+      edit_visible = ""
+    )
     val_resdat <- reactiveValues(
       raw_dat_state = NULL,
       dat_state = NULL,
-      del_dat_state = NULL,
-      is_visible = FALSE
+      del_dat_state = NULL
     )
     val_accdat <- reactiveValues(
       raw_dat_state = NULL,
       dat_state = NULL,
-      del_dat_state = NULL,
-      is_visible = FALSE
+      del_dat_state = NULL
     )
     val_frecomdat <- reactiveValues(
       raw_dat_state = NULL,
       dat_state = NULL,
-      del_dat_state = NULL,
-      is_visible = FALSE
+      del_dat_state = NULL
+    )
+    val_sitdat <- reactiveValues(
+      raw_dat_state = NULL,
+      dat_state = NULL,
+      del_dat_state = NULL
     )
     val_wqxdat <- reactiveValues(
       raw_dat_state = NULL,
       dat_state = NULL,
-      del_dat_state = NULL,
-      is_visible = FALSE
+      del_dat_state = NULL
     )
     val_censdat <- reactiveValues(
       raw_dat_state = NULL,
       dat_state = NULL,
-      del_dat_state = NULL,
-      is_visible = FALSE
+      del_dat_state = NULL
     )
 
     # Modules ----
@@ -154,8 +157,8 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_resdat
       }),
-      val_log = reactive({
-        val_log()
+      dat_status = reactive({
+        val
       })
     )
     mod_accdat <- mod_upload_repair_server(
@@ -164,8 +167,8 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_accdat
       }),
-      val_log = reactive({
-        val_log()
+      dat_status = reactive({
+        val
       })
     )
     mod_frecomdat <- mod_upload_repair_server(
@@ -174,18 +177,28 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_frecomdat
       }),
-      val_log = reactive({
-        val_log()
+      dat_status = reactive({
+        val
+      })
+    )
+    mod_sitdat <- mod_upload_repair_server(
+      "sitdat_editor",
+      dat_name = "sitdat",
+      dat_values = reactive({
+        val_sitdat
+      }),
+      dat_status = reactive({
+        val
       })
     )
     mod_wqxdat <- mod_upload_repair_server(
       "wqxdat_editor",
-      dat_name = "resdat",
+      dat_name = "wqxdat",
       dat_values = reactive({
-        val_resdat
+        val_wqxdat
       }),
-      val_log = reactive({
-        val_log()
+      dat_status = reactive({
+        val
       })
     )
     mod_censdat <- mod_upload_repair_server(
@@ -194,31 +207,45 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_censdat
       }),
-      val_log = reactive({
-        val_log()
+      dat_status = reactive({
+        val
       })
     )
 
     # Reformat data ----
     observe({
       req(wqf$dat_results())
-      from_format_upload(wqf$dat_results(), retry_fns$resdat, "resdat")
+      new_dat <- from_format_upload(
+        wqf$dat_results(),
+        retry_fns$resdat,
+        "resdat"
+      )
       showNotification(
         "Results data loaded from format converter",
         type = "message",
         duration = 4
       )
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      resdat$raw_dat_state <- new_dat$raw_dat_state
+      resdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(wqf$dat_results())
 
     observe({
       req(wqf$dat_sites())
-      from_format_upload(wqf$dat_sites(), retry_fns$sitdat, "sitdat")
+      new_dat <- from_format_upload(wqf$dat_sites(), retry_fns$sitdat, "sitdat")
       showNotification(
         "Sites data loaded from format converter",
         type = "message",
         duration = 4
       )
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      sitdat$raw_dat_state <- new_dat$raw_dat_state
+      sitdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(wqf$dat_sites())
 
@@ -235,103 +262,70 @@ mod_upload_server <- function(id) {
     }) |>
       bindEvent(input$show_format_modal)
 
-    # upload & validate -----
+    # Upload & validate -----
     observe({
-      fl_upload(input$resdat, readMWRresults, "resdat")
+      new_dat <- fl_upload(input$resdat, readMWRresults, "resdat")
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      resdat$raw_dat_state <- new_dat$raw_dat_state
+      resdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$resdat)
 
     observe({
-      fl_upload(input$accdat, readMWRacc, "accdat")
+      new_dat <- fl_upload(input$accdat, readMWRacc, "accdat")
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      accdat$raw_dat_state <- new_dat$raw_dat_state
+      accdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$accdat)
 
     observe({
-      fl_upload(input$frecomdat, readMWRfrecom, "frecomdat")
+      new_dat <- fl_upload(input$frecomdat, readMWRfrecom, "frecomdat")
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      frecomdat$raw_dat_state <- new_dat$raw_dat_state
+      frecomdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$frecomdat)
 
     observe({
-      fl_upload(input$sitdat, readMWRsites, "sitdat")
+      new_dat <- fl_upload(input$sitdat, readMWRsites, "sitdat")
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      sitdat$raw_dat_state <- new_dat$raw_dat_state
+      sitdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$sitdat)
 
     observe({
-      fl_upload(input$wqxdat, readMWRwqx, "wqxdat")
+      new_dat <- fl_upload(input$wqxdat, readMWRwqx, "wqxdat")
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      wqxdat$raw_dat_state <- new_dat$raw_dat_state
+      wqxdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$wqxdat)
 
     observe({
-      fl_upload(input$censdat, readMWRcens, "censdat")
+      new_dat <- fl_upload(input$censdat, readMWRcens, "censdat")
+
+      val$validation_log <- new_dat$val_log
+      val$edit_visible <- new_dat$edit_visible
+      censdat$raw_dat_state <- new_dat$raw_dat_state
+      censdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$censdat)
 
-    # Status outputs ----
-    output$resdat_status <- renderUI({
-      fl_status(input$tester, input$resdat, data_states$resdat)
-    })
-
-    output$accdat_status <- renderUI({
-      fl_status(input$tester, input$accdat, data_states$accdat)
-    })
-
-    output$frecomdat_status <- renderUI({
-      fl_status(input$tester, input$frecomdat, data_states$frecomdat)
-    })
-
-    output$sitdat_status <- renderUI({
-      fl_status(input$tester, input$sitdat, data_states$sitdat)
-    })
-
-    output$wqxdat_status <- renderUI({
-      fl_status(input$tester, input$wqxdat, data_states$wqxdat)
-    })
-
-    output$censdat_status <- renderUI({
-      fl_status(input$tester, input$censdat, data_states$censdat)
-    })
-
-    # Downlaod data ----
-    output$download_data_btn <- renderUI({
-      any_loaded <- isTRUE(input$tester) ||
-        any(!sapply(reactiveValuesToList(data_states), is.null))
-      if (!any_loaded) {
-        return(NULL)
-      }
-      dl_btn("download_data", "Download data", size = "sm")
-    })
-
-    output$download_data <- downloadHandler(
-      filename = function() {
-        paste0("MassWateR_data_", format(Sys.time(), "%Y%m%d"), ".zip")
-      },
-      content = function(file) {
-        fls <- fsetls()
-        file_map <- list(
-          "results.csv" = fls$res,
-          "accuracy.csv" = fls$acc,
-          "frequency_completeness.csv" = fls$frecom,
-          "sites.csv" = fls$sit,
-          "wqx_metadata.csv" = fls$wqx,
-          "censored.csv" = fls$cens
-        )
-        tmp_dir <- tempfile(pattern = "masswater_dl_")
-        dir.create(tmp_dir)
-        for (nm in names(file_map)) {
-          df <- file_map[[nm]]
-          if (!is.null(df)) {
-            write.csv(df, file.path(tmp_dir, nm), row.names = FALSE)
-          }
-        }
-        old_wd <- setwd(tmp_dir)
-        on.exit(setwd(old_wd), add = TRUE)
-        utils::zip(file, list.files(tmp_dir))
-      }
-    )
-
     # Validation messages -----
     output$validation_messages <- renderUI({
-      msg <- validation_log()
+      msg <- val$validation_log
       if (nchar(trimws(msg)) == 0) {
         return(NULL)
       }
@@ -341,7 +335,32 @@ mod_upload_server <- function(id) {
       div(HTML(paste(lines, collapse = "<br>")))
     })
 
-    # Output ----
+    # Data Status ----
+    output$resdat_status <- renderUI({
+      fl_status(input$tester, input$resdat, val_resdat$dat_state)
+    })
+
+    output$accdat_status <- renderUI({
+      fl_status(input$tester, input$accdat, val_accdat$dat_state)
+    })
+
+    output$frecomdat_status <- renderUI({
+      fl_status(input$tester, input$frecomdat, val_frecomdat$dat_state)
+    })
+
+    output$sitdat_status <- renderUI({
+      fl_status(input$tester, input$sitdat, val_sitdat$dat_state)
+    })
+
+    output$wqxdat_status <- renderUI({
+      fl_status(input$tester, input$wqxdat, val_wqxdat$dat_state)
+    })
+
+    output$censdat_status <- renderUI({
+      fl_status(input$tester, input$censdat, val_censdat$dat_state)
+    })
+
+    # Bundle data ----
     fsetls <- reactive({
       if (input$tester) {
         resdat <- readMWRresults(
@@ -393,12 +412,12 @@ mod_upload_server <- function(id) {
           runchk = FALSE
         )
       } else {
-        resdat <- val_resdat$data_state
-        accdat <- val_accdat$data_state
-        frecomdat <- val_frecomdat$data_state
-        sitdat <- val_sitdat$data_state
-        wqxdat <- val_wqxdat$data_state
-        censdat <- val_censdat$data_state
+        resdat <- val_resdat$dat_state
+        accdat <- val_accdat$dat_state
+        frecomdat <- val_frecomdat$dat_state
+        sitdat <- val_sitdat$dat_state
+        wqxdat <- val_wqxdat$dat_state
+        censdat <- val_censdat$dat_state
       }
 
       list(
@@ -410,6 +429,46 @@ mod_upload_server <- function(id) {
         cens = censdat
       )
     })
+
+    # Download data ----
+    output$download_data_btn <- renderUI({
+      any_loaded <- isTRUE(input$tester) || is.null(unlist(fsetls()))
+
+      if (!any_loaded) {
+        return(NULL)
+      }
+      dl_btn("download_data", "Download data", size = "sm")
+    })
+
+    output$download_data <- downloadHandler(
+      filename = function() {
+        paste0("MassWateR_data_", format(Sys.time(), "%Y%m%d"), ".zip")
+      },
+      content = function(file) {
+        fls <- fsetls()
+        file_map <- list(
+          "results.csv" = fls$res,
+          "accuracy.csv" = fls$acc,
+          "frequency_completeness.csv" = fls$frecom,
+          "sites.csv" = fls$sit,
+          "wqx_metadata.csv" = fls$wqx,
+          "censored.csv" = fls$cens
+        )
+        tmp_dir <- tempfile(pattern = "masswater_dl_")
+        dir.create(tmp_dir)
+        for (nm in names(file_map)) {
+          df <- file_map[[nm]]
+          if (!is.null(df)) {
+            write.csv(df, file.path(tmp_dir, nm), row.names = FALSE)
+          }
+        }
+        old_wd <- setwd(tmp_dir)
+        on.exit(setwd(old_wd), add = TRUE)
+        utils::zip(file, list.files(tmp_dir))
+      }
+    )
+
+    # Module output ----
 
     return(
       reactive({

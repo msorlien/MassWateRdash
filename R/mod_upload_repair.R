@@ -32,14 +32,14 @@ mod_upload_repair_ui <- function(id, dat_name) {
 #' interactive process.
 #'
 #' @param id Namespace id for module. Should match `mod_upload_repair_ui()` id.
-#' @param raw_dat_state Dataframe. Raw data.
-#' @param del_dat_state Dataframe. Censored data.
 #' @param dat_name String. Short dataframe name.
-#' @param is_visible Boolean. If `TRUE`, show `ns("open_editor")`.
-#' @param val_log String. Validation log.
+#' @param dat_values Reactive list. Must contain items raw_dat_state, dat_state,
+#' and del_dat_state.
+#' @param val_log Reactive list. Must contain values items validation_log,
+#' edit_visible.
 #'
 #' @noRd
-mod_upload_repair_server <- function(id, dat_name, dat_values, val_log) {
+mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -49,23 +49,27 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, val_log) {
       raw_dat_state = NULL,
       dat_state = NULL,
       del_dat_state = NULL,
-      is_visible = FALSE
+      edit_visible = FALSE
     )
 
     observe({
-      val$is_visible <- dat_values$is_visible()
+      if (dat_status$edit_visible() == dat_name) {
+        val$edit_visible <- TRUE
+      } else {
+        val$edit_visible <- FALSE
+      }
     }) |>
-      bindEvent(dat_values$is_visible())
+      bindEvent(dat_status$edit_visible())
 
     # Toggle edit button visibility
     output$show_btn <- renderText({
-      paste(val$is_visible)
+      paste(val$edit_visible)
     })
     outputOptions(output, "show_btn", suspendWhenHidden = FALSE)
 
     # Update reactive values when "Edit" button selected
     observe({
-      val$val_log <- dat_values$validation_log()
+      val$val_log <- dat_status$validation_log()
       val$raw_dat_state <- dat_values$raw_dat_state()
       val$dat_state <- dat_values$dat_state()
       val$del_dat_state <- dat_values$del_dat_state()
@@ -251,8 +255,8 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, val_log) {
       col_err <- is_column_error(val$val_log)
       new_dat <- handle_retry(
         dat_name,
-        raw_dat_state = raw_dat_state,
-        is_visible = val$is_visible,
+        raw_dat_state = val$raw_dat_state,
+        edit_visible = val$edit_visible,
         hot_input = if (!col_err) input$hot else NULL,
         hot_headers_input = if (col_err) input$hot_headers else NULL,
         show_all = isTRUE(input$show_all_rows),
@@ -262,9 +266,9 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, val_log) {
       val$val_log <- new_dat$val_log
       val$raw_dat_state <- new_dat$raw_dat_state
       val$dat_state <- new_dat$dat_state
-      val$is_visible <- new_dat$is_visible
+      val$edit_visible <- new_dat$edit_visible
 
-      if (!val$is_visible) removeModal()
+      if (!val$edit_visible) removeModal()
     }) |>
       bindEvent(input$retry)
 

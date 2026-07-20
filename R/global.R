@@ -1,13 +1,3 @@
-library(shiny)
-library(bslib)
-library(bsicons)
-library(MassWateR)
-library(rhandsontable)
-library(here)
-library(shinyWidgets)
-
-source(here("R/funcs.R"))
-
 tabfontsize <- 10
 padding <- 0
 dqofontsize <- 10

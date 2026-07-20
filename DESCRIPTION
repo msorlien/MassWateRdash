@@ -52,7 +52,6 @@ Imports:
     flextable,
     ggplot2,
     golem,
-    here,
     htmltools,
     lubridate,
     MassWateR,

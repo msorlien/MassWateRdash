@@ -1,4 +1,4 @@
-testServer(
+shiny::testServer(
   mod_upload_repair_server,
   # Add here your module params
   args = list(
@@ -6,10 +6,12 @@ testServer(
     dat_values = reactiveValues(
       raw_dat_state = NULL,
       dat_state = NULL,
-      del_dat_state = NULL,
-      is_visible = FALSE
+      del_dat_state = NULL
     ),
-    val_log = ""
+    dat_status = reactiveValues(
+      validation_log = "",
+      edit_visible = ""
+    )
   ),
   {
     ns <- session$ns

@@ -14,21 +14,21 @@ mod_outlier_ui <- function(id) {
       sidebar = bslib::sidebar(
         title = "Options",
         width = 500,
-        uiOutput("prm1"),
-        uiOutput("dtrng1"),
+        uiOutput(ns("prm1")),
+        uiOutput(ns("date_range")),
         selectInput(
-          "group1",
+          ns("group1"),
           "Group by",
           choices = c("month", "week", "site")
         ),
         selectInput(
-          "type1",
+          ns("type1"),
           "Plot type",
           choices = c("box", "jitterbox", "jitter")
         )
       ),
       bslib::navset_card_underline(
-        full_screen = T,
+        full_screen = TRUE,
         bslib::nav_panel(
           "Plot",
           plotOutput("outlier_plot")
@@ -50,25 +50,63 @@ mod_outlier_ui <- function(id) {
 #' outlier Server Functions
 #'
 #' @noRd
-mod_outlier_server <- function(id) {
+mod_outlier_server <- function(id, fsetls) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
+    # reactive UI -----
+    output$prm1 <- renderUI({
+      # inputs
+      fset <- fsetls()
+
+      validate(
+        need(!is.null(fset$res), 'Waiting for input data...')
+      )
+
+      tosel <- sort(unique(fset$res$`Characteristic Name`))
+
+      selectInput("param1", "Parameter", choices = tosel)
+    })
+
+    output$date_range <- renderUI({
+      # inputs
+      param1 <- input$param1
+
+      req(fsetls$res(), param1)
+
+      tosel <- fsetls$res() |>
+        dplyr::filter(`Characteristic Name` == param1) |>
+        dplyr::pull(`Activity Start Date`) |>
+        range() |>
+        as.Date()
+
+      sliderInput(
+        "date_range",
+        "Date range",
+        min = tosel[1],
+        max = tosel[2],
+        value = tosel,
+        width = '95%'
+      )
+    })
+
+    # Plots ----
     output$outlier_plot <- renderPlot({
       # inputs
       param1 <- input$param1
-      dtrng1 <- as.character(input$dtrng1)
+      date_range <- as.character(input$date_range)
       group1 <- input$group1
       type1 <- input$type1
 
-      req(fsetls()$res, fsetls()$acc, param1, dtrng1)
+      req(fsetls$res(), fsetls$acc(), param1, date_range)
 
       anlzMWRoutlier(
-        res = fsetls()$res,
+        res = fsetls$res(),
         param = param1,
-        acc = fsetls()$acc,
+        acc = fsetls$acc(),
         group = group1,
         type = type1,
-        dtrng = dtrng1,
+        dtrng = date_range,
         bssize = 18
       ) +
         ggplot2::labs(title = NULL)
@@ -77,18 +115,18 @@ mod_outlier_server <- function(id) {
     output$outlier_table <- reactable::renderReactable({
       # inputs
       param1 <- input$param1
-      dtrng1 <- as.character(input$dtrng1)
+      date_range <- as.character(input$date_range)
       group1 <- input$group1
       type1 <- input$type1
 
-      req(fsetls()$res, fsetls()$acc, param1, dtrng1)
+      req(fsetls$res(), fsetls$acc(), param1, date_range)
 
       tab <- anlzMWRoutlier(
-        res = fsetls()$res,
+        res = fsetls$res(),
         param = param1,
-        acc = fsetls()$acc,
+        acc = fsetls$acc(),
         group = group1,
-        dtrng = dtrng1,
+        dtrng = date_range,
         outliers = T
       )
 
@@ -111,7 +149,7 @@ mod_outlier_server <- function(id) {
       },
       content = function(file) {
         # inputs
-        dtrng1 <- as.character(input$dtrng1)
+        date_range <- as.character(input$date_range)
         group1 <- input$group1
         type1 <- input$type1
 
@@ -119,7 +157,7 @@ mod_outlier_server <- function(id) {
           fset = fsetls(),
           group = group1,
           type = type1,
-          dtrng = dtrng1,
+          dtrng = date_range,
           format = "word",
           output_dir = dirname(file),
           output_file = basename(file)
@@ -134,7 +172,7 @@ mod_outlier_server <- function(id) {
       },
       content = function(file) {
         # inputs
-        dtrng1 <- as.character(input$dtrng1)
+        date_range <- as.character(input$date_range)
         group1 <- input$group1
         type1 <- input$type1
 
@@ -142,7 +180,7 @@ mod_outlier_server <- function(id) {
           fset = fsetls(),
           group = group1,
           type = type1,
-          dtrng = dtrng1,
+          dtrng = date_range,
           format = "zip",
           output_dir = dirname(file),
           output_file = basename(file)

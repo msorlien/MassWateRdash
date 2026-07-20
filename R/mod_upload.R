@@ -335,6 +335,61 @@ mod_upload_server <- function(id) {
       div(HTML(paste(lines, collapse = "<br>")))
     })
 
+    # Repair data ----
+    observe({
+      val$validation_log <- mod_resdat$val_log
+      val$edit_visible <- if (mod_resdat$edit_visible) "resdat" else ""
+      val_resdat$raw_dat_state <- mod_resdat$raw_dat_state
+      val_resdat$dat_state <- mod_resdat$dat_state
+      val_resdat$del_dat_state <- mod_resdat$del_dat_state
+    }) |>
+      bindEvent(mod_resdat)
+
+    observe({
+      val$validation_log <- mod_accdat$val_log
+      val$edit_visible <- if (mod_accdat$edit_visible) "accdat" else ""
+      val_accdat$raw_dat_state <- mod_accdat$raw_dat_state
+      val_accdat$dat_state <- mod_accdat$dat_state
+      val_accdat$del_dat_state <- mod_accdat$del_dat_state
+    }) |>
+      bindEvent(mod_accdat)
+
+    observe({
+      val$validation_log <- mod_frecomdat$val_log
+      val$edit_visible <- if (mod_frecomdat$edit_visible) "frecomdat" else ""
+      val_frecomdat$raw_dat_state <- mod_frecomdat$raw_dat_state
+      val_frecomdat$dat_state <- mod_frecomdat$dat_state
+      val_frecomdat$del_dat_state <- mod_frecomdat$del_dat_state
+    }) |>
+      bindEvent(mod_frecomdat)
+
+    observe({
+      val$validation_log <- mod_sitdat$val_log
+      val$edit_visible <- if (mod_sitdat$edit_visible) "sitdat" else ""
+      val_sitdat$raw_dat_state <- mod_sitdat$raw_dat_state
+      val_sitdat$dat_state <- mod_sitdat$dat_state
+      val_sitdat$del_dat_state <- mod_sitdat$del_dat_state
+    }) |>
+      bindEvent(mod_sitdat)
+
+    observe({
+      val$validation_log <- mod_wqxdat$val_log
+      val$edit_visible <- if (mod_wqxdat$edit_visible) "wqxdat" else ""
+      val_wqxdat$raw_dat_state <- mod_wqxdat$raw_dat_state
+      val_wqxdat$dat_state <- mod_wqxdat$dat_state
+      val_wqxdat$del_dat_state <- mod_wqxdat$del_dat_state
+    }) |>
+      bindEvent(mod_wqxdat)
+
+    observe({
+      val$validation_log <- mod_censdat$val_log
+      val$edit_visible <- if (mod_censdat$edit_visible) "censdat" else ""
+      val_censdat$raw_dat_state <- mod_censdat$raw_dat_state
+      val_censdat$dat_state <- mod_censdat$dat_state
+      val_censdat$del_dat_state <- mod_censdat$del_dat_state
+    }) |>
+      bindEvent(mod_censdat)
+
     # Data Status ----
     output$resdat_status <- renderUI({
       fl_status(input$tester, input$resdat, val_resdat$dat_state)

@@ -278,6 +278,9 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
         val_log = reactive({
           val$val_log
         }),
+        edit_visible = reactive({
+          val$edit_visible
+        }),
         raw_dat_state = reactive({
           val$raw_dat_state
         }),

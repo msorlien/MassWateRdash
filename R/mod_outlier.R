@@ -9,22 +9,45 @@
 #' @importFrom shiny NS tagList
 mod_outlier_ui <- function(id) {
   ns <- NS(id)
+
   tagList(
     bslib::page_sidebar(
       sidebar = bslib::sidebar(
         title = "Options",
         width = 500,
-        uiOutput(ns("prm1")),
-        uiOutput(ns("date_range")),
-        selectInput(
-          ns("group1"),
-          "Group by",
-          choices = c("month", "week", "site")
-        ),
-        selectInput(
-          ns("type1"),
-          "Plot type",
-          choices = c("box", "jitterbox", "jitter")
+        tabsetPanel(
+          id = ns("ts_sidebar"),
+          type = "hidden",
+          tabPanelBody(
+            "loading",
+            'Waiting for input data...'
+          ),
+          tabPanelBody(
+            "ready",
+            selectInput(
+              ns("param"),
+              "Parameter",
+              choices = NULL
+            ),
+            sliderInput(
+              ns("date_range"),
+              "Date range",
+              min = Sys.Date(),
+              max = Sys.Date(),
+              value = c(Sys.Date(), Sys.Date()),
+              width = '95%'
+            ),
+            selectInput(
+              ns("group"),
+              "Group by",
+              choices = c("month", "week", "site")
+            ),
+            selectInput(
+              ns("type"),
+              "Plot type",
+              choices = c("box", "jitterbox", "jitter")
+            )
+          )
         )
       ),
       bslib::navset_card_underline(
@@ -54,58 +77,69 @@ mod_outlier_server <- function(id, fsetls) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    # Toggle tabset ----
+    observe({
+      if (!isTruthy(fsetls$res())) {
+        updateTabsetPanel(inputId = "ts_sidebar", selected = "loading")
+      } else {
+        updateTabsetPanel(inputId = "ts_sidebar", selected = "ready")
+      }
+    }) |>
+      bindEvent(fsetls$res())
+
     # reactive UI -----
-    output$prm1 <- renderUI({
-      # inputs
-      fset <- fsetls()
+    observe({
+      req(fsetls$res())
 
-      validate(
-        need(!is.null(fset$res), 'Waiting for input data...')
+      dat <- fsetls$res()
+
+      tosel <- sort(unique(dat$`Characteristic Name`))
+
+      updateSelectInput(
+        session = session,
+        inputId = "param",
+        choices = tosel
       )
+    }) |>
+      bindEvent(fsetls$res())
 
-      tosel <- sort(unique(fset$res$`Characteristic Name`))
+    observe({
+      req(fsetls$res(), input$param)
 
-      selectInput("param1", "Parameter", choices = tosel)
-    })
-
-    output$date_range <- renderUI({
-      # inputs
-      param1 <- input$param1
-
-      req(fsetls$res(), param1)
+      param <- input$param
 
       tosel <- fsetls$res() |>
-        dplyr::filter(`Characteristic Name` == param1) |>
-        dplyr::pull(`Activity Start Date`) |>
+        dplyr::filter(.data$`Characteristic Name` == param) |>
+        dplyr::pull(.data$`Activity Start Date`) |>
         range() |>
         as.Date()
 
-      sliderInput(
-        "date_range",
-        "Date range",
+      updateSliderInput(
+        session = session,
+        inputId = "date_range",
         min = tosel[1],
         max = tosel[2],
-        value = tosel,
-        width = '95%'
+        value = tosel
       )
-    })
+    }) |>
+      bindEvent(fsetls$res(), input$param)
 
     # Plots ----
     output$outlier_plot <- renderPlot({
       # inputs
-      param1 <- input$param1
+      param <- input$param
       date_range <- as.character(input$date_range)
-      group1 <- input$group1
-      type1 <- input$type1
+      group <- input$group
+      type <- input$type
 
-      req(fsetls$res(), fsetls$acc(), param1, date_range)
+      req(fsetls$res(), fsetls$acc(), param, date_range)
 
       anlzMWRoutlier(
         res = fsetls$res(),
-        param = param1,
+        param = param,
         acc = fsetls$acc(),
-        group = group1,
-        type = type1,
+        group = group,
+        type = type,
         dtrng = date_range,
         bssize = 18
       ) +
@@ -114,18 +148,18 @@ mod_outlier_server <- function(id, fsetls) {
 
     output$outlier_table <- reactable::renderReactable({
       # inputs
-      param1 <- input$param1
+      param <- input$param
       date_range <- as.character(input$date_range)
-      group1 <- input$group1
-      type1 <- input$type1
+      group <- input$group
+      type <- input$type
 
-      req(fsetls$res(), fsetls$acc(), param1, date_range)
+      req(fsetls$res(), fsetls$acc(), param, date_range)
 
       tab <- anlzMWRoutlier(
         res = fsetls$res(),
-        param = param1,
+        param = param,
         acc = fsetls$acc(),
-        group = group1,
+        group = group,
         dtrng = date_range,
         outliers = T
       )
@@ -150,13 +184,13 @@ mod_outlier_server <- function(id, fsetls) {
       content = function(file) {
         # inputs
         date_range <- as.character(input$date_range)
-        group1 <- input$group1
-        type1 <- input$type1
+        group <- input$group
+        type <- input$type
 
         anlzMWRoutlierall(
           fset = fsetls(),
-          group = group1,
-          type = type1,
+          group = group,
+          type = type,
           dtrng = date_range,
           format = "word",
           output_dir = dirname(file),
@@ -173,13 +207,13 @@ mod_outlier_server <- function(id, fsetls) {
       content = function(file) {
         # inputs
         date_range <- as.character(input$date_range)
-        group1 <- input$group1
-        type1 <- input$type1
+        group <- input$group
+        type <- input$type
 
         anlzMWRoutlierall(
           fset = fsetls(),
-          group = group1,
-          type = type1,
+          group = group,
+          type = type,
           dtrng = date_range,
           format = "zip",
           output_dir = dirname(file),

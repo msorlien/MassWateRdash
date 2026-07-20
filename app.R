@@ -83,42 +83,13 @@ ui <- page_navbar(
   # Upload & Validate----
   nav_panel(
     "1 Upload & Validate",
-    mod_upload("upload")
+    mod_upload_ui("upload")
   ),
 
   # Outlier assessment -----
   nav_panel(
     "2 Outlier assessment",
-    page_sidebar(
-      sidebar = sidebar(
-        title = "Options",
-        width = 500,
-        uiOutput("prm1"),
-        uiOutput("dtrng1"),
-        selectInput("group1", "Group by", choices = c("month", "week", "site")),
-        selectInput(
-          "type1",
-          "Plot type",
-          choices = c("box", "jitterbox", "jitter")
-        )
-      ),
-      navset_card_underline(
-        full_screen = T,
-        nav_panel(
-          "Plot",
-          plotOutput("outlier_plot")
-        ),
-        nav_panel(
-          "Table",
-          reactable::reactableOutput("outlier_table")
-        ),
-        nav_panel(
-          "Report",
-          uiOutput("dwnldoutwrdbutt"),
-          uiOutput("dwnldoutzipbutt")
-        )
-      )
-    )
+    mod_outlier_ui("outlier")
   ),
 
   # QC reporting -----
@@ -313,8 +284,9 @@ ui <- page_navbar(
 
 # server -----
 server <- function(input, output, session) {
-  # Modules
+  # Modules ----
   fsetls <- mod_upload_server("upload")
+  mod_outlier_server("outlier", fsetls)
 
   # reactive UI -----
 
@@ -466,137 +438,6 @@ server <- function(input, output, session) {
 
     dl_btn('dwnldwqx', 'Download WQX workbook')
   })
-
-  # Modules ----
-  wqf <- mod_upload_format_server("prep")
-
-  observeEvent(wqf$dat_results(), {
-    req(wqf$dat_results())
-    from_format_upload(wqf$dat_results(), retry_fns$resdat, "resdat")
-    showNotification(
-      "Results data loaded from format converter",
-      type = "message",
-      duration = 4
-    )
-  })
-
-  observeEvent(wqf$dat_sites(), {
-    req(wqf$dat_sites())
-    from_format_upload(wqf$dat_sites(), retry_fns$sitdat, "sitdat")
-    showNotification(
-      "Sites data loaded from format converter",
-      type = "message",
-      duration = 4
-    )
-  })
-
-  observeEvent(input$show_format_modal, {
-    showModal(modalDialog(
-      title = "Convert from Another Format",
-      mod_upload_format_ui("prep", in_modal = TRUE),
-      size = "xl",
-      footer = modalButton("Close"),
-      easyClose = TRUE
-    ))
-  })
-
-  # Outlier assessment -----
-  output$outlier_plot <- renderPlot({
-    # inputs
-    param1 <- input$param1
-    dtrng1 <- as.character(input$dtrng1)
-    group1 <- input$group1
-    type1 <- input$type1
-
-    req(fsetls()$res, fsetls()$acc, param1, dtrng1)
-
-    anlzMWRoutlier(
-      res = fsetls()$res,
-      param = param1,
-      acc = fsetls()$acc,
-      group = group1,
-      type = type1,
-      dtrng = dtrng1,
-      bssize = 18
-    ) +
-      ggplot2::labs(title = NULL)
-  })
-
-  output$outlier_table <- reactable::renderReactable({
-    # inputs
-    param1 <- input$param1
-    dtrng1 <- as.character(input$dtrng1)
-    group1 <- input$group1
-    type1 <- input$type1
-
-    req(fsetls()$res, fsetls()$acc, param1, dtrng1)
-
-    tab <- anlzMWRoutlier(
-      res = fsetls()$res,
-      param = param1,
-      acc = fsetls()$acc,
-      group = group1,
-      dtrng = dtrng1,
-      outliers = T
-    )
-
-    out <- reactable::reactable(
-      tab,
-      defaultColDef = reactable::colDef(
-        footerStyle = list(fontWeight = "bold"),
-        resizable = TRUE
-      ),
-      filterable = T
-    )
-
-    return(out)
-  })
-
-  # download outlier report word
-  output$dwnldoutwrd <- downloadHandler(
-    filename = function() {
-      'outlierreport.docx'
-    },
-    content = function(file) {
-      # inputs
-      dtrng1 <- as.character(input$dtrng1)
-      group1 <- input$group1
-      type1 <- input$type1
-
-      anlzMWRoutlierall(
-        fset = fsetls(),
-        group = group1,
-        type = type1,
-        dtrng = dtrng1,
-        format = 'word',
-        output_dir = dirname(file),
-        output_file = basename(file)
-      )
-    }
-  )
-
-  # download outlier report zip
-  output$dwnldoutzip <- downloadHandler(
-    filename = function() {
-      'outlierreport.zip'
-    },
-    content = function(file) {
-      # inputs
-      dtrng1 <- as.character(input$dtrng1)
-      group1 <- input$group1
-      type1 <- input$type1
-
-      anlzMWRoutlierall(
-        fset = fsetls(),
-        group = group1,
-        type = type1,
-        dtrng = dtrng1,
-        format = 'zip',
-        output_dir = dirname(file),
-        output_file = basename(file)
-      )
-    }
-  )
 
   # QC reporting -----
 

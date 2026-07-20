@@ -176,7 +176,6 @@ handle_retry <- function(
   if (!is.null(result)) {
     is_visible <- FALSE
     raw_dat_state <- NULL
-    removeModal()
   }
 
   return(

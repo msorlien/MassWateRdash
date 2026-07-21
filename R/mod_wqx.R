@@ -11,22 +11,22 @@ mod_wqx_ui <- function(id) {
   ns <- NS(id)
   tagList(
     bslib::navset_card_underline(
-      full_screen = T,
+      full_screen = TRUE,
       bslib::nav_panel(
         "Projects",
-        reactable::reactableOutput("tabwqxprojects")
+        reactable::reactableOutput(ns("tabwqxprojects"))
       ),
       bslib::nav_panel(
         "Locations",
-        reactable::reactableOutput("tabwqxlocations")
+        reactable::reactableOutput(ns("tabwqxlocations"))
       ),
       bslib::nav_panel(
         "Results",
-        reactable::reactableOutput("tabwqxresults")
+        reactable::reactableOutput(ns("tabwqxresults"))
       ),
       bslib::nav_panel(
         "Workbook",
-        uiOutput("dwnldwqxbutt")
+        uiOutput(ns("dwnldwqxbutt"))
       )
     )
   )
@@ -35,14 +35,14 @@ mod_wqx_ui <- function(id) {
 #' wqx Server Functions
 #'
 #' @noRd
-mod_wqx_server <- function(id) {
+mod_wqx_server <- function(id, fsetls) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     # list output
     tabwqx <- reactive({
-      req(fsetls()$res, fsetls()$acc, fsetls()$sit, fsetls()$wqx)
+      req(fsetls$res(), fsetls$acc(), fsetls$sit(), fsetls$wqx())
 
-      tabMWRwqx(fset = fsetls(), listout = T, warn = F)
+      tabMWRwqx(fset = fsetls(), listout = TRUE, warn = FALSE)
     })
 
     # projects table
@@ -54,7 +54,7 @@ mod_wqx_server <- function(id) {
         defaultColDef = reactable::colDef(
           resizable = TRUE
         ),
-        filterable = T
+        filterable = TRUE
       )
     })
 
@@ -67,7 +67,7 @@ mod_wqx_server <- function(id) {
         defaultColDef = reactable::colDef(
           resizable = TRUE
         ),
-        filterable = T
+        filterable = TRUE
       )
     })
 
@@ -80,7 +80,7 @@ mod_wqx_server <- function(id) {
         defaultColDef = reactable::colDef(
           resizable = TRUE
         ),
-        filterable = T
+        filterable = TRUE
       )
     })
 
@@ -99,9 +99,3 @@ mod_wqx_server <- function(id) {
     )
   })
 }
-
-## To be copied in the UI
-# mod_wqx_ui("wqx_1")
-
-## To be copied in the server
-# mod_wqx_server("wqx_1")

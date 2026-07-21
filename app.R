@@ -93,29 +93,9 @@ ui <- page_navbar(
     "3 QC reporting",
     mod_qc_ui("qc")
   ),
-
-  # WQX output -----
   nav_panel(
     "4 WQX output",
-    navset_card_underline(
-      full_screen = T,
-      nav_panel(
-        "Projects",
-        reactable::reactableOutput('tabwqxprojects')
-      ),
-      nav_panel(
-        "Locations",
-        reactable::reactableOutput('tabwqxlocations')
-      ),
-      nav_panel(
-        "Results",
-        reactable::reactableOutput('tabwqxresults')
-      ),
-      nav_panel(
-        "Workbook",
-        uiOutput("dwnldwqxbutt")
-      )
-    )
+    mod_wqx_ui("wqx")
   ),
 
   # Visualize -----
@@ -210,6 +190,7 @@ server <- function(input, output, session) {
   fsetls <- mod_upload_server("upload")
   mod_outlier_server("outlier", fsetls)
   mod_qc_server("qc", fsetls)
+  mod_wqx_server("wqx", fsetls)
 
   # reactive UI -----
 
@@ -361,68 +342,6 @@ server <- function(input, output, session) {
 
     dl_btn('dwnldwqx', 'Download WQX workbook')
   })
-
-  # WQX -----
-
-  # list output
-  tabwqx <- reactive({
-    req(fsetls()$res, fsetls()$acc, fsetls()$sit, fsetls()$wqx)
-
-    tabMWRwqx(fset = fsetls(), listout = T, warn = F)
-  })
-
-  # projects table
-  output$tabwqxprojects <- reactable::renderReactable({
-    req(tabwqx())
-
-    reactable::reactable(
-      tabwqx()$Projects,
-      defaultColDef = reactable::colDef(
-        resizable = TRUE
-      ),
-      filterable = T
-    )
-  })
-
-  # locations table
-  output$tabwqxlocations <- reactable::renderReactable({
-    req(tabwqx())
-
-    reactable::reactable(
-      tabwqx()$Locations,
-      defaultColDef = reactable::colDef(
-        resizable = TRUE
-      ),
-      filterable = T
-    )
-  })
-
-  # results table
-  output$tabwqxresults <- reactable::renderReactable({
-    req(tabwqx())
-
-    reactable::reactable(
-      tabwqx()$Results,
-      defaultColDef = reactable::colDef(
-        resizable = TRUE
-      ),
-      filterable = T
-    )
-  })
-
-  # download wqx workbook
-  output$dwnldwqx <- downloadHandler(
-    filename = function() {
-      'wqxtab.xlsx'
-    },
-    content = function(file) {
-      tabMWRwqx(
-        fset = fsetls(),
-        output_dir = dirname(file),
-        output_file = basename(file)
-      )
-    }
-  )
 
   # Visualize ----
 

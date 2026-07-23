@@ -218,7 +218,7 @@ mod_upload_server <- function(id) {
       })
     )
 
-    # Reformat data ----
+    # Format data ----
     observe({
       req(wqf$dat_results())
 

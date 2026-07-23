@@ -1,22 +1,3 @@
-# Function to capture and log messages
-capture_messages <- function(expr) {
-  # Create a text connection to capture output
-  temp <- textConnection("messages", "w", local = TRUE)
-  sink(temp, type = "message")
-  on.exit({
-    sink(type = "message")
-    close(temp)
-  })
-
-  # Get the captured messages
-  new_msgs <- if (exists("messages")) paste(messages, collapse = "\n") else ""
-
-  list(
-    result = expr,
-    msgs = new_msgs
-  )
-}
-
 detect_wrong_file <- function(raw_df, data_name) {
   if (is.null(raw_df)) {
     return(NULL)
@@ -100,83 +81,6 @@ retry_fns <- list(
   wqxdat = function(df) formMWRwqx(checkMWRwqx(df, warn = TRUE)),
   censdat = function(df) formMWRcens(checkMWRcens(df, warn = TRUE))
 )
-
-# file upload for observers
-fl_upload <- function(file, read_function, data_name) {
-  req(file)
-
-  val_log <- ""
-  raw_dat_state <- NULL
-  edit_visible <- FALSE
-
-  result <- tryCatch(
-    {
-      capture_messages(read_function(file$datapath))
-    },
-    error = function(e) {
-      raw <- tryCatch(
-        raw_read_fns[[data_name]](file$datapath),
-        error = function(e2) NULL
-      )
-      wrong_file_msg <- detect_wrong_file(raw, data_name)
-      if (!is.null(wrong_file_msg)) {
-        val_log <- wrong_file_msg
-      } else {
-        val_log <- paste0("Error in ", data_name, ": ", e$message)
-        raw_dat_state <- raw
-        edit_visible <- !is.null(raw)
-      }
-      NULL
-    }
-  )
-
-  if (!is.null(result)) {
-    val_log <- result$msgs
-    dat_state <- result$result
-  } else {
-    dat_state <- NULL
-  }
-
-  list(
-    val_log = val_log,
-    raw_dat_state = raw_dat_state,
-    dat_state = dat_state,
-    edit_visible = if (!edit_visible) "" else data_name
-  )
-}
-
-# upload handler for data already converted in memory (e.g. from Format tab)
-from_format_upload <- function(df, retry_fn, data_name) {
-  val_log <- ""
-  raw_dat_state <- NULL
-  edit_visible <- FALSE
-
-  result <- tryCatch(
-    {
-      capture_messages(retry_fn(df))
-    },
-    error = function(e) {
-      val_log <- paste0("Error processing ", data_name, ": ", e$message)
-      raw_dat_state <- df
-      edit_visible <- TRUE
-      NULL
-    }
-  )
-
-  if (!is.null(result)) {
-    val_log <- result$msgs
-    dat_state <- result$result
-  } else {
-    dat_state <- NULL
-  }
-
-  list(
-    val_log = val_log,
-    raw_dat_state = raw_dat_state,
-    dat_state = dat_state,
-    edit_visible = if (!edit_visible) "" else data_name
-  )
-}
 
 #' File status
 #'

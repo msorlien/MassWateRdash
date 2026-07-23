@@ -9,6 +9,7 @@
 #' @importFrom MassWateR anlzMWRseason
 #' @importFrom MassWateR anlzMWRsite
 #' @importFrom MassWateR checkMWRresults
+#' @importFrom MassWateR checkMWRsites
 #' @importFrom MassWateR formMWRresults
 #' @importFrom MassWateR qcMWRreview
 #' @importFrom MassWateR readMWRacc

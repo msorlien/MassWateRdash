@@ -1,0 +1,82 @@
+validationLog <- R6::R6Class(
+  "validationLog",
+  public = list(
+    msg = "",
+    result = NULL,
+    dat = NULL,
+    raw_dat = NULL,
+    edit_dat = "",
+
+    catch_msg = function(expr) {
+      # Create a text connection to capture output
+      temp <- textConnection("messages", "w", local = TRUE)
+      sink(temp, type = "message")
+      on.exit({
+        sink(type = "message")
+        close(temp)
+      })
+
+      self$result <- expr
+
+      # Get the captured messages
+      if (exists("messages")) {
+        current_log <- if (nchar(self$msg) > 0) paste0(self$msg, "\n") else ""
+
+        new_msgs <- paste(messages, collapse = "\n")
+        new_msgs <- gsub("\\\033..;|\\\033.", "", new_msgs)
+
+        self$msg <- paste0(current_log, new_msgs)
+      }
+
+      invisible(self)
+    },
+    fl_upload = function(file, read_function, data_name) {
+      req(file)
+
+      self$msg <- ""
+      self$edit_dat <- ""
+      self$raw_dat <- NULL
+
+      result <- tryCatch(
+        {
+          self$catch_msg <- read_function(file$datapath)
+        },
+        error = function(e) {
+          raw <- tryCatch(
+            raw_read_fns[[data_name]](file$datapath),
+            error = function(e2) NULL
+          )
+          wrong_file_msg <- detect_wrong_file(raw, data_name)
+          if (!is.null(wrong_file_msg)) {
+            self$msg <- wrong_file_msg
+          } else {
+            self$msg <- paste0("Error in ", data_name, ": ", e$message)
+            self$raw_dat <- raw
+            self$edit_dat <- if (!is.null(raw)) data_name else ""
+          }
+          NULL
+        }
+      )
+
+      self$dat <- result
+    },
+    initialize = function(msg = "") {
+      self$msg <- msg
+    }
+  )
+)
+
+resdatClass <- R6::R6Class(
+  "resdatClass",
+  inherit = validationLog,
+  public = list(
+    raw_dat = NULL,
+    dat = NULL,
+    del_dat = NULL,
+    initialize = function(raw_dat = NULL, dat = NULL, del_dat = NULL) {
+      self$raw_dat <- raw_dat
+      self$dat <- dat
+      self$del_dat <- del_dat
+    }
+  )
+)

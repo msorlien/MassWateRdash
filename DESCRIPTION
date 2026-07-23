@@ -56,6 +56,7 @@ Imports:
     htmltools,
     lubridate,
     MassWateR,
+    R6,
     reactable,
     readxl,
     rhandsontable,

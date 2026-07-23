@@ -35,11 +35,17 @@ mod_upload_repair_ui <- function(id, dat_name) {
 #' @param dat_name String. Short dataframe name.
 #' @param dat_values Reactive list. Must contain items raw_dat_state, dat_state,
 #' and del_dat_state.
-#' @param val_log Reactive list. Must contain values items validation_log,
-#' edit_visible.
+#' @param val_log Reactive string. Validation log.
+#' @param edit_visible Reactive string. Which edit module to display.
 #'
 #' @noRd
-mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
+mod_upload_repair_server <- function(
+  id,
+  dat_name,
+  dat_values,
+  val_log,
+  edit_visible
+) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -53,13 +59,13 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
     )
 
     observe({
-      if (dat_status$edit_visible() == dat_name) {
+      if (edit_visible() == dat_name) {
         val$edit_visible <- TRUE
       } else {
         val$edit_visible <- FALSE
       }
     }) |>
-      bindEvent(dat_status$edit_visible())
+      bindEvent(edit_visible())
 
     # Toggle edit button visibility
     output$show_btn <- renderText({
@@ -69,7 +75,6 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
 
     # Update reactive values when "Edit" button selected
     observe({
-      val$val_log <- dat_status$validation_log()
       val$raw_dat_state <- dat_values$raw_dat_state()
       val$dat_state <- dat_values$dat_state()
       val$del_dat_state <- dat_values$del_dat_state()
@@ -90,7 +95,7 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
           uiOutput(ns("modal_msgs")),
           br(),
           p("Fix the issue below, then click 'Try upload again'."),
-          if (is_column_error(val$val_log)) {
+          if (is_column_error(val_log$msg)) {
             bslib::card(
               bslib::card_header("Column Names"),
               rhandsontable::rHandsontableOutput(ns("hot_headers"))
@@ -122,7 +127,7 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
 
     # Validation message shown inside the modal
     output$modal_msgs <- renderUI({
-      msg <- val$val_log
+      msg <- val_log$msg
       if (nchar(trimws(msg)) == 0) {
         return(NULL)
       }
@@ -138,7 +143,7 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
       req(val$raw_dat_state)
 
       col_names <- names(val$raw_dat_state)
-      locs <- parse_error_locations(val$val_log)
+      locs <- parse_error_locations(val_log$msg)
       header_df <- setNames(
         as.data.frame(as.list(col_names), stringsAsFactors = FALSE),
         as.character(seq_along(col_names))
@@ -171,7 +176,7 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
 
     # Row filter toggle - shown in the Data card header when problem rows exist
     output$row_filter_ui <- renderUI({
-      problem_rows <- parse_problem_rows(val$val_log)
+      problem_rows <- parse_problem_rows(val_log$msg)
       if (length(problem_rows) == 0) {
         return(NULL)
       }
@@ -196,8 +201,8 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
     output$hot <- rhandsontable::renderRHandsontable({
       req(val$raw_dat_state)
       dat <- val$raw_dat_state
-      problem_rows <- parse_problem_rows(val$val_log)
-      locs <- parse_error_locations(val$val_log, names(dat))
+      problem_rows <- parse_problem_rows(val_log$msg)
+      locs <- parse_error_locations(val_log$msg, names(dat))
       show_all <- isTRUE(input$show_all_rows)
       if (length(problem_rows) > 0 && !show_all) {
         valid_rows <- problem_rows[
@@ -252,7 +257,7 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
 
     # Retry ----
     observe({
-      col_err <- is_column_error(val$val_log)
+      col_err <- is_column_error(val_log$msg)
       new_dat <- handle_retry(
         dat_name,
         raw_dat_state = val$raw_dat_state,
@@ -260,10 +265,10 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
         hot_input = if (!col_err) input$hot else NULL,
         hot_headers_input = if (col_err) input$hot_headers else NULL,
         show_all = isTRUE(input$show_all_rows),
-        problem_rows = parse_problem_rows(val$val_log)
+        problem_rows = parse_problem_rows(val_log$msg)
       )
 
-      val$val_log <- new_dat$val_log
+      val_log$msg <- new_dat$val_log
       val$raw_dat_state <- new_dat$raw_dat_state
       val$dat_state <- new_dat$dat_state
       val$edit_visible <- new_dat$edit_visible
@@ -275,9 +280,6 @@ mod_upload_repair_server <- function(id, dat_name, dat_values, dat_status) {
     # Return data ----
     return(
       list(
-        val_log = reactive({
-          val$val_log
-        }),
         edit_visible = reactive({
           val$edit_visible
         }),

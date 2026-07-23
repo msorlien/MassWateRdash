@@ -6,7 +6,7 @@ addResourcePath(
 )
 
 # ui -----
-ui <- page_navbar(
+ui <- bslib::page_navbar(
   header = tags$head(
     tags$script(HTML(
       "$(document).on('shown.bs.modal', function(e) {
@@ -81,30 +81,30 @@ ui <- page_navbar(
   ),
 
   # Tabs ----
-  nav_panel(
+  bslib::nav_panel(
     "1 Upload & Validate",
     mod_upload_ui("upload")
   ),
-  nav_panel(
+  bslib::nav_panel(
     "2 Outlier assessment",
     mod_outlier_ui("outlier")
   ),
-  nav_panel(
+  bslib::nav_panel(
     "3 QC reporting",
     mod_qc_ui("qc")
   ),
-  nav_panel(
+  bslib::nav_panel(
     "4 WQX output",
     mod_wqx_ui("wqx")
   ),
-  nav_panel(
+  bslib::nav_panel(
     "5 Visualize",
     mod_visualize_ui("visualize")
   ),
 
-  nav_spacer(),
+  bslib::nav_spacer(),
 
-  nav_item(
+  bslib::nav_item(
     tags$a(
       href = "https://github.com/massbays-tech/MassWateRdash",
       target = "_blank",

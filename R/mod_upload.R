@@ -19,7 +19,7 @@ mod_upload_ui <- function(id) {
           style = "display: flex; align-items: center; gap: 12px;",
           div(
             style = "flex: 0 0 auto;",
-            shinyWidgets::materialSwitch("tester", "Test mode", FALSE)
+            shinyWidgets::materialSwitch(ns("tester"), "Test mode", FALSE)
           ),
           div(
             style = "flex: 1;",
@@ -113,11 +113,11 @@ mod_upload_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    # R6 classes ----
+    val_log <- validationLog$new()
+
     # Reactive values -----
-    val <- reactiveValues(
-      validation_log = "",
-      edit_visible = ""
-    )
+    edit_visible <- reactiveVal("")
     val_resdat <- reactiveValues(
       raw_dat_state = NULL,
       dat_state = NULL,
@@ -157,8 +157,9 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_resdat
       }),
-      dat_status = reactive({
-        val
+      val_log = val_log,
+      edit_visible = reactive({
+        edit_visible()
       })
     )
     mod_accdat <- mod_upload_repair_server(
@@ -167,8 +168,9 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_accdat
       }),
-      dat_status = reactive({
-        val
+      val_log = val_log,
+      edit_visible = reactive({
+        edit_visible()
       })
     )
     mod_frecomdat <- mod_upload_repair_server(
@@ -177,8 +179,9 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_frecomdat
       }),
-      dat_status = reactive({
-        val
+      val_log = val_log,
+      edit_visible = reactive({
+        edit_visible()
       })
     )
     mod_sitdat <- mod_upload_repair_server(
@@ -187,8 +190,9 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_sitdat
       }),
-      dat_status = reactive({
-        val
+      val_log = val_log,
+      edit_visible = reactive({
+        edit_visible()
       })
     )
     mod_wqxdat <- mod_upload_repair_server(
@@ -197,8 +201,9 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_wqxdat
       }),
-      dat_status = reactive({
-        val
+      val_log = val_log,
+      edit_visible = reactive({
+        edit_visible()
       })
     )
     mod_censdat <- mod_upload_repair_server(
@@ -207,14 +212,16 @@ mod_upload_server <- function(id) {
       dat_values = reactive({
         val_censdat
       }),
-      dat_status = reactive({
-        val
+      val_log = val_log,
+      edit_visible = reactive({
+        edit_visible()
       })
     )
 
     # Reformat data ----
     observe({
       req(wqf$dat_results())
+
       new_dat <- from_format_upload(
         wqf$dat_results(),
         retry_fns$resdat,
@@ -226,10 +233,10 @@ mod_upload_server <- function(id) {
         duration = 4
       )
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      resdat$raw_dat_state <- new_dat$raw_dat_state
-      resdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_resdat$raw_dat_state <- new_dat$raw_dat_state
+      val_resdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(wqf$dat_results())
 
@@ -242,10 +249,10 @@ mod_upload_server <- function(id) {
         duration = 4
       )
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      sitdat$raw_dat_state <- new_dat$raw_dat_state
-      sitdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_sitdat$raw_dat_state <- new_dat$raw_dat_state
+      val_sitdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(wqf$dat_sites())
 
@@ -253,7 +260,7 @@ mod_upload_server <- function(id) {
       showModal(
         modalDialog(
           title = "Convert from Another Format",
-          mod_upload_format_ui("reformat", in_modal = TRUE),
+          mod_upload_format_ui(ns("reformat"), in_modal = TRUE),
           size = "xl",
           footer = modalButton("Close"),
           easyClose = TRUE
@@ -266,66 +273,66 @@ mod_upload_server <- function(id) {
     observe({
       new_dat <- fl_upload(input$resdat, readMWRresults, "resdat")
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      resdat$raw_dat_state <- new_dat$raw_dat_state
-      resdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_resdat$raw_dat_state <- new_dat$raw_dat_state
+      val_resdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$resdat)
 
     observe({
       new_dat <- fl_upload(input$accdat, readMWRacc, "accdat")
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      accdat$raw_dat_state <- new_dat$raw_dat_state
-      accdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_accdat$raw_dat_state <- new_dat$raw_dat_state
+      val_accdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$accdat)
 
     observe({
       new_dat <- fl_upload(input$frecomdat, readMWRfrecom, "frecomdat")
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      frecomdat$raw_dat_state <- new_dat$raw_dat_state
-      frecomdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_frecomdat$raw_dat_state <- new_dat$raw_dat_state
+      val_frecomdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$frecomdat)
 
     observe({
       new_dat <- fl_upload(input$sitdat, readMWRsites, "sitdat")
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      sitdat$raw_dat_state <- new_dat$raw_dat_state
-      sitdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_sitdat$raw_dat_state <- new_dat$raw_dat_state
+      val_sitdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$sitdat)
 
     observe({
       new_dat <- fl_upload(input$wqxdat, readMWRwqx, "wqxdat")
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      wqxdat$raw_dat_state <- new_dat$raw_dat_state
-      wqxdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_wqxdat$raw_dat_state <- new_dat$raw_dat_state
+      val_wqxdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$wqxdat)
 
     observe({
       new_dat <- fl_upload(input$censdat, readMWRcens, "censdat")
 
-      val$validation_log <- new_dat$val_log
-      val$edit_visible <- new_dat$edit_visible
-      censdat$raw_dat_state <- new_dat$raw_dat_state
-      censdat$dat_state <- new_dat$dat_state
+      val_log$msg <- new_dat$val_log
+      edit_visible(new_dat$edit_visible)
+      val_censdat$raw_dat_state <- new_dat$raw_dat_state
+      val_censdat$dat_state <- new_dat$dat_state
     }) |>
       bindEvent(input$censdat)
 
     # Validation messages -----
     output$validation_messages <- renderUI({
-      msg <- val$validation_log
+      msg <- val_log$msg
       if (nchar(trimws(msg)) == 0) {
         return(NULL)
       }
@@ -337,8 +344,11 @@ mod_upload_server <- function(id) {
 
     # Repair data ----
     observe({
-      val$validation_log <- mod_resdat$val_log
-      val$edit_visible <- if (mod_resdat$edit_visible) "resdat" else ""
+      if (isTruthy(mod_resdat$edit_visible)) {
+        edit_visible("resdat")
+      } else {
+        edit_visible("")
+      }
       val_resdat$raw_dat_state <- mod_resdat$raw_dat_state
       val_resdat$dat_state <- mod_resdat$dat_state
       val_resdat$del_dat_state <- mod_resdat$del_dat_state
@@ -346,8 +356,11 @@ mod_upload_server <- function(id) {
       bindEvent(mod_resdat)
 
     observe({
-      val$validation_log <- mod_accdat$val_log
-      val$edit_visible <- if (mod_accdat$edit_visible) "accdat" else ""
+      if (isTruthy(mod_accdat$edit_visible)) {
+        edit_visible("accdat")
+      } else {
+        edit_visible("")
+      }
       val_accdat$raw_dat_state <- mod_accdat$raw_dat_state
       val_accdat$dat_state <- mod_accdat$dat_state
       val_accdat$del_dat_state <- mod_accdat$del_dat_state
@@ -355,8 +368,11 @@ mod_upload_server <- function(id) {
       bindEvent(mod_accdat)
 
     observe({
-      val$validation_log <- mod_frecomdat$val_log
-      val$edit_visible <- if (mod_frecomdat$edit_visible) "frecomdat" else ""
+      if (isTruthy(mod_frecomdat$edit_visible)) {
+        edit_visible("frecomdat")
+      } else {
+        edit_visible("")
+      }
       val_frecomdat$raw_dat_state <- mod_frecomdat$raw_dat_state
       val_frecomdat$dat_state <- mod_frecomdat$dat_state
       val_frecomdat$del_dat_state <- mod_frecomdat$del_dat_state
@@ -364,8 +380,11 @@ mod_upload_server <- function(id) {
       bindEvent(mod_frecomdat)
 
     observe({
-      val$validation_log <- mod_sitdat$val_log
-      val$edit_visible <- if (mod_sitdat$edit_visible) "sitdat" else ""
+      if (isTruthy(mod_sitdat$edit_visible)) {
+        edit_visible("sitdat")
+      } else {
+        edit_visible("")
+      }
       val_sitdat$raw_dat_state <- mod_sitdat$raw_dat_state
       val_sitdat$dat_state <- mod_sitdat$dat_state
       val_sitdat$del_dat_state <- mod_sitdat$del_dat_state
@@ -373,8 +392,11 @@ mod_upload_server <- function(id) {
       bindEvent(mod_sitdat)
 
     observe({
-      val$validation_log <- mod_wqxdat$val_log
-      val$edit_visible <- if (mod_wqxdat$edit_visible) "wqxdat" else ""
+      if (isTruthy(mod_wqxdat$edit_visible)) {
+        edit_visible("wqxdat")
+      } else {
+        edit_visible("")
+      }
       val_wqxdat$raw_dat_state <- mod_wqxdat$raw_dat_state
       val_wqxdat$dat_state <- mod_wqxdat$dat_state
       val_wqxdat$del_dat_state <- mod_wqxdat$del_dat_state
@@ -382,8 +404,11 @@ mod_upload_server <- function(id) {
       bindEvent(mod_wqxdat)
 
     observe({
-      val$validation_log <- mod_censdat$val_log
-      val$edit_visible <- if (mod_censdat$edit_visible) "censdat" else ""
+      if (isTruthy(mod_censdat$edit_visible)) {
+        edit_visible("censdat")
+      } else {
+        edit_visible("")
+      }
       val_censdat$raw_dat_state <- mod_censdat$raw_dat_state
       val_censdat$dat_state <- mod_censdat$dat_state
       val_censdat$del_dat_state <- mod_censdat$del_dat_state
@@ -487,12 +512,12 @@ mod_upload_server <- function(id) {
 
     # Download data ----
     output$download_data_btn <- renderUI({
-      any_loaded <- isTRUE(input$tester) || is.null(unlist(fsetls()))
+      any_loaded <- isTRUE(input$tester) || !is.null(unlist(fsetls()))
 
       if (!any_loaded) {
         return(NULL)
       }
-      dl_btn("download_data", "Download data", size = "sm")
+      dl_btn(ns("download_data"), "Download data", size = "sm")
     })
 
     output$download_data <- downloadHandler(
@@ -524,7 +549,6 @@ mod_upload_server <- function(id) {
     )
 
     # Module output ----
-
     return(
       reactive({
         fsetls()

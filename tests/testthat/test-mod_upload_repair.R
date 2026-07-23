@@ -8,10 +8,8 @@ testServer(
       dat_state = NULL,
       del_dat_state = NULL
     ),
-    dat_status = reactiveValues(
-      validation_log = "",
-      edit_visible = ""
-    )
+    val_log = "",
+    edit_visible = ""
   ),
   {
     ns <- session$ns

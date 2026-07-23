@@ -1,11 +1,11 @@
 test_that("detect_wrong_file works", {
-  dat_resdat <- data.frame(
+  dat_results <- data.frame(
     "Activity Type" = NA,
     "Characteristic Name" = NA,
     "Result Value" = NA,
     check.names = FALSE
   )
-  
+
   dat_nonsense <- data.frame(
     "foo" = NA,
     "bar" = NA
@@ -15,14 +15,14 @@ test_that("detect_wrong_file works", {
     detect_wrong_file(raw_df = NULL, data_name = "resdat")
   )
   expect_null(
-    detect_wrong_file(raw_df = dat_resdat, data_name = "resdat")
+    detect_wrong_file(raw_df = dat_results, data_name = "resdat")
   )
   expect_equal(
     detect_wrong_file(raw_df = dat_nonsense, data_name = "resdat"),
     "Error: Did you upload the wrong file? The column names do not match the expected format."
   )
   expect_equal(
-    detect_wrong_file(raw_df = dat_resdat, data_name = "sitdat"),
+    detect_wrong_file(raw_df = dat_results, data_name = "sitdat"),
     "Error: Did you upload the wrong file? This looks like it may be Results data."
   )
 })

@@ -88,9 +88,9 @@ retry_fns <- list(
         names(df) &&
         !lubridate::is.POSIXct(df$`Activity Start Date`)
     ) {
-      df$`Activity Start Date` <- as.POSIXct(as.character(
-        df$`Activity Start Date`
-      ))
+      df$`Activity Start Date` <- as.POSIXct(
+        as.character(df$`Activity Start Date`)
+      )
     }
     formMWRresults(checkMWRresults(df, warn = TRUE))
   },
@@ -137,7 +137,7 @@ fl_upload <- function(file, read_function, data_name) {
     dat_state <- NULL
   }
 
-  return(
+  list(
     val_log = val_log,
     raw_dat_state = raw_dat_state,
     dat_state = dat_state,
@@ -170,7 +170,7 @@ from_format_upload <- function(df, retry_fn, data_name) {
     dat_state <- NULL
   }
 
-  return(
+  list(
     val_log = val_log,
     raw_dat_state = raw_dat_state,
     dat_state = dat_state,
